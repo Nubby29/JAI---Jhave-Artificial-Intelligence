@@ -1,4 +1,4 @@
-# JAI Version: 0.9.0
+# JAI Version: 0.11.0
 """Tests for persistent memory and communication-based learning."""
 import tempfile
 import unittest
@@ -9,7 +9,7 @@ class MemoryTests(unittest.TestCase):
     def test_remember_creates_raw_and_organized_memory(self):
         with tempfile.TemporaryDirectory() as directory:
             manager=MemoryManager(Path(directory)/"memory"); record=manager.remember("Python can automate tasks.")
-            self.assertEqual(record["version"],"0.9.0"); self.assertEqual(manager.stats()["encounters"],1)
+            self.assertEqual(record["version"],"0.11.0"); self.assertEqual(manager.stats()["encounters"],1)
             self.assertTrue(list(manager.raw_root.rglob("*.json"))); self.assertTrue(list(manager.organized_root.rglob("*.json")))
 
     def test_memory_survives_new_manager_instance(self):
@@ -27,5 +27,23 @@ class MemoryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             manager=MemoryManager(Path(directory)/"memory"); manager.remember_conversation("My favorite project is JAI.","I will remember this encounter.")
             context=manager.recall_context("favorite project JAI"); self.assertIn("JAI",context); self.assertIn("favorite",context)
+
+
+    def test_fix_replaces_existing_learned_fact(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)/"memory"; manager=MemoryManager(root)
+            manager.learn_fact("addition","means","combining numbers")
+            manager.learn_fact("addition","means","combining values",replace=True)
+            facts=MemoryManager(root).learned_facts("addition")
+            self.assertEqual(len(facts),1)
+            self.assertEqual(facts[0]["metadata"]["value"],"combining values")
+
+    def test_explicit_training_can_store_freeform_statement(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)/"memory"; manager=MemoryManager(root)
+            manager.learn_statement("JAI should treat this as a learned statement.")
+            results=MemoryManager(root).search("learned statement")
+            self.assertTrue(results)
+            self.assertEqual(results[0]["metadata"]["type"],"learned_statement")
 
 if __name__=="__main__": unittest.main()
