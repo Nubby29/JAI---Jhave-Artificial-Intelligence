@@ -4,9 +4,9 @@
 
 ## Current Version
 
-**JAI 0.3.0 — Attention / Transformer Foundations**
+**JAI 0.4.0 — Decoder-Style Transformer**
 
-JAI now has a from-scratch implementation of single-head scaled dot-product self-attention and a minimal Transformer-style residual block. The 0.2.0 language model remains the trained language-model baseline while these Transformer mechanics are developed and tested separately.
+JAI now has a from-scratch decoder-style Transformer forward pass with token embeddings, positional encoding, causal self-attention, residual connections, normalization, a feed-forward network, and next-token softmax output. The model is ready for the next training/backpropagation stage.
 
 This is intentionally tiny and educational. It is **not an LLM** and does not use pretrained weights or external machine-learning libraries.
 
@@ -56,11 +56,21 @@ This is intentionally tiny and educational. It is **not an LLM** and does not us
 - Residual connection
 - Inspectable Transformer-style block
 
+### 0.4.0 — Decoder-Style Transformer
+- Token embeddings
+- Sinusoidal positional encoding
+- Causal self-attention
+- Residual connections
+- Layer normalization
+- ReLU feed-forward network
+- Next-token softmax output
+- Parameter counting
+
 ## How JAI Learns Language
 
 Text -> Tokenizer -> Token IDs -> Embeddings -> Attention -> Context-aware representations -> Next-token probabilities -> Loss -> Gradient descent
 
-At 0.3.0, attention is implemented as a foundation and inspection tool. It is not yet the complete trained Transformer language model.
+At 0.4.0, the Transformer forward pass is complete enough to produce next-token probabilities. Its parameters are not yet trained end-to-end; backpropagation through the Transformer is the next engineering step.
 
 ## Important Note
 
@@ -76,7 +86,8 @@ JAI is still extremely small. The current model uses averaged embeddings rather 
 | 0.1.0 | Tokenizer |
 | **0.2.0** | **Tiny language model** |
 | **0.3.0** | **Attention / Transformer foundations** |
-| 0.3 | Transformer/attention foundations |
+| **0.4.0** | **Decoder-style Transformer forward pass** |
+| 0.4.1 | Backpropagation through the Transformer |
 | 0.5 | External memory |
 | 1.0 | Local JAI system |
 
