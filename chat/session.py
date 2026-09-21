@@ -1,4 +1,4 @@
-# JAI Version: 0.10.1
+# JAI Version: 0.10.2
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -25,11 +25,27 @@ class ChatSession:
     def _normalize(text):
         return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
 
+    def _is_question(self, text):
+        """Prevent questions from being mistaken for facts being taught."""
+        normalized = self._normalize(text)
+        if not normalized:
+            return False
+        return (
+            text.rstrip().endswith("?")
+            or re.match(r"^(what|who|where|when|why|how|can|could|do|does|did|is|are|am|will|would|should)\b", normalized)
+        ) is not None
+
     def _extract_learning(self, message):
         """Recognize natural teaching statements and store one or more facts."""
         if self.memory is None:
             return None
+
         text = message.strip()
+
+        # A question is asking JAI for knowledge, not teaching it.
+        if self._is_question(text):
+            return None
+
         facts = []
 
         def add(subject, relation, value):
