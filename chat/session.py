@@ -1,4 +1,4 @@
-# JAI Version: 0.12.3
+# JAI Version: 0.12.4
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -100,13 +100,16 @@ class ChatSession:
                             add(match.group(1), relation, match.group(2))
                         break
 
+        # Learn arithmetic examples embedded in teaching text. The expression must
+        # begin with a digit so explanatory text such as "Addition example" is
+        # ignored while every numeric equation in the same instruction is kept.
         equation_matches = re.findall(
-            r"(?:(?:example|for\s+example)\s+)?([^=.!?]+?)\s*=\s*([0-9]+(?:\.[0-9]+)?)",
+            r"(?<![A-Za-z0-9])([0-9][0-9+\-*/()\s]*?)\s*=\s*([0-9]+(?:\.[0-9]+)?)",
             text,
-            re.IGNORECASE,
         )
         for left, right in equation_matches:
             left = left.strip(" .,:;")
+            left = re.sub(r"\s+$", "", left)
             if re.fullmatch(r"[0-9+\-*/()\s]+", left):
                 add(left, "equals", right)
 
