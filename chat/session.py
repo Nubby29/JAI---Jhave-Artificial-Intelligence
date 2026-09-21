@@ -1,4 +1,4 @@
-# JAI Version: 0.14.7
+# JAI Version: 0.14.8
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -185,45 +185,63 @@ class ChatSession:
         if self.memory is None:
             return None
 
-        # Keep the original message because normalization removes HTML syntax such
-        # as <p>, which is meaningful to the programming-language learner.
         original = message.strip()
-        match = re.match(
-            r"^(?:create|make|write|generate)\s+(?:a|an)\s+(?:sample|simple|basic)?\s*(html|xml)\s+(?:(?:that\s+)?(?:shows?|displays?|contains?)\s+|with\s+)(.+?)\s+inside\s+(<![^>]+>|<[a-zA-Z][a-zA-Z0-9-]*>)\s*[.!?]?$",
+
+        # Accept natural variations such as:
+        # "create an html with hello world inside the <p>"
+        # "create a sample html that shows hello world inside the <p>"
+        request = re.match(
+            r"^(?:create|make|write|generate)\\s+(?:a|an)\\s+(?:sample|simple|basic)?" 
+            r"\\s*(html|xml)\\s+(.+?)\\s+inside\\s+(<![^>]+>|<[a-zA-Z][a-zA-Z0-9-]*>)"
+            r"\\s*[.!?]?$",
             original,
             re.IGNORECASE,
         )
-        if not match:
+        if not request:
             return None
 
-        language = match.group(1).lower()
-        content = match.group(2).strip().rstrip(" .!?")
-        construct = match.group(3).lower()
+        language = request.group(1).lower()
+        before_inside = request.group(2).strip()
+        construct = request.group(3).lower()
+
         if language != "html":
             return None
 
-        # Check JAI's programming memory instead of hard-coding the meaning of
-        # <p>. The learner stores subjects as "html <p>".
-        known = False
-        for fact in self.memory.programming_facts(language=language, limit=100):
-            meta = fact.get("metadata", {})
-            stored_subject = str(meta.get("subject", "")).strip().lower()
-            if stored_subject == f"{language} {construct}" and meta.get("relation") == "defines":
-                known = True
-                break
+        # Extract the requested text from common wording.
+        content_match = re.search(
+            r"^(?:that\\s+)?(?:shows?|displays?|contains?)\\s+(.+)$",
+            before_inside,
+            re.IGNORECASE,
+        )
+        if content_match:
+            content = content_match.group(1).strip().rstrip(" .!?")
+        else:
+            with_match = re.match(r"^with\\s+(.+)$", before_inside, re.IGNORECASE)
+            if not with_match:
+                return None
+            content = with_match.group(1).strip().rstrip(" .!?")
+
+        # Verify that JAI actually learned the construct. Match by the stored
+        # programming subject rather than assuming the fact is in a fixed slot.
+        known = any(
+            str(fact.get("metadata", {}).get("subject", "")).strip().lower()
+            == f"{language} {construct}"
+            and fact.get("metadata", {}).get("relation") == "defines"
+            for fact in self.memory.programming_facts(language=language, limit=100)
+        )
         if not known:
             return None
 
         if construct == "<p>":
             return (
-                "<!DOCTYPE html>\n"
-                "<html>\n"
-                "<head>\n"
-                "<title>Hello World</title>\n"
-                "</head>\n"
-                "<body>\n"
-                f"<p>{content}</p>\n"
-                "</body>\n"
+                "<!DOCTYPE html>\\n"
+                "<html>\\n"
+                "<head>\\n"
+                "<title>Hello World</title>\\n"
+                "</head>\\n"
+                "<body>\\n"
+                f"<p>{content}</p>\\n"
+                "</body>\\n"
                 "</html>"
             )
 
