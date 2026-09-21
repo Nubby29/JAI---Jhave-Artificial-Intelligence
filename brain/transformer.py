@@ -1,4 +1,4 @@
-# JAI Version: 0.4.1
+# JAI Version: 0.5.1
 """A trainable decoder-style Transformer built from scratch for JAI."""
 
 import math
@@ -369,6 +369,54 @@ class TransformerLanguageModel:
             if stop_token_id is not None and next_id == stop_token_id:
                 break
         return generated
+
+    def save(self, path):
+        """Save the complete model architecture and learned parameters as JSON."""
+        import json
+        from pathlib import Path
+
+        data = {
+            "version": "0.5.1",
+            "vocabulary_size": self.vocabulary_size,
+            "model_size": self.model_size,
+            "context_size": self.context_size,
+            "embeddings": self.embeddings,
+            "query_weights": self.query_weights,
+            "key_weights": self.key_weights,
+            "value_weights": self.value_weights,
+            "output_weights": self.output_weights,
+            "ffn_in": self.ffn_in,
+            "ffn_out": self.ffn_out,
+            "output_biases": self.output_biases,
+        }
+        Path(path).write_text(json.dumps(data), encoding="utf-8")
+
+    @classmethod
+    def load(cls, path):
+        """Load a previously saved JAI Transformer checkpoint."""
+        import json
+        from pathlib import Path
+
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+        if data.get("version") != "0.5.1":
+            raise ValueError("Unsupported JAI Transformer checkpoint version.")
+        model = cls(
+            data["vocabulary_size"],
+            model_size=data["model_size"],
+            context_size=data["context_size"],
+        )
+        for name in (
+            "embeddings",
+            "query_weights",
+            "key_weights",
+            "value_weights",
+            "output_weights",
+            "ffn_in",
+            "ffn_out",
+            "output_biases",
+        ):
+            setattr(model, name, data[name])
+        return model
 
     def parameter_count(self):
         hidden_size = self.model_size * 2
