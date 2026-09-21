@@ -162,7 +162,7 @@ class ChatSession:
                     subject = match.group(1).strip()
                     # Natural questions often include an article ("a dog", "an animal",
                     # "the sky"), while learned facts are stored by their core subject.
-                    subject = re.sub(r"^(?:a|an|the)\\s+", "", subject, count=1, flags=re.IGNORECASE)
+                    subject = re.sub(r"^(?:a|an|the)\s+", "", subject, count=1, flags=re.IGNORECASE)
                 break
 
         if subject is None:
