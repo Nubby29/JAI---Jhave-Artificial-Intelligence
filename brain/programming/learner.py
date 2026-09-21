@@ -1,4 +1,4 @@
-# JAI Version: 0.14.1
+# JAI Version: 0.14.2
 """General-purpose programming-language knowledge extraction for JAI."""
 
 from __future__ import annotations
@@ -54,8 +54,8 @@ class ProgrammingLearner:
                 add(f"{language} {match.group(1)}", "defines", match.group(2), "declaration")
 
         element_patterns = [
-            rf"(?:in\s+{re.escape(language)}\s*,?\s*)?(?:the\s+)?(<[a-zA-Z][a-zA-Z0-9-]*>)\s+(?:element\s+)?(?:defines|means|is)\s+(.+?)(?:[.!?]|$)",
-            rf"(?:in\s+{re.escape(language)}\s*,?\s*)?(?:the\s+)?(<[a-zA-Z][a-zA-Z0-9-]*>)\s+(?:element\s+)?is\s+used\s+for\s+(.+?)(?:[.!?]|$)",
+            rf"(?:in\s+{re.escape(language)}\s*,?\s*)?(?:the\s+)?(<[a-zA-Z][a-zA-Z0-9-]*>)\s+(?:element\s+)?(?:defines|means|is)\s+(.+?)(?=(?:\s+(?:the\s+)?(?:<![A-Za-z][^>]*>|<[a-zA-Z][a-zA-Z0-9-]*>)\s)|[.!?]|$)",
+            rf"(?:in\s+{re.escape(language)}\s*,?\s*)?(?:the\s+)?(<[a-zA-Z][a-zA-Z0-9-]*>)\s+(?:element\s+)?is\s+used\s+for\s+(.+?)(?=(?:\s+(?:the\s+)?(?:<![A-Za-z][^>]*>|<[a-zA-Z][a-zA-Z0-9-]*>)\s)|[.!?]|$)",
         ]
         for pattern in element_patterns:
             for match in re.finditer(pattern, text, re.IGNORECASE):
