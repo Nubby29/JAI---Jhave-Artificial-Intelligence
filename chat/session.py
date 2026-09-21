@@ -1,4 +1,4 @@
-# JAI Version: 0.10.4
+# JAI Version: 0.10.5
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -112,12 +112,12 @@ class ChatSession:
 
         normalized = self._normalize(message)
         patterns = [
-            (r"^(?:what|who)\s+is\s+(?:my|your|the)\s+(.+?)['’]s\s+name$", None),
-            (r"^(?:what|who)\s+is\s+(.+?)$", None),
-            (r"^(?:what(?:'s| is)\s+my\s+name)$", "my name"),
-            (r"^(?:what(?:'s| is)\s+your\s+name)$", "JAI"),
+            (r"^(?:what(?:'s| is)|who\s+is)\s+my\s+name$", "my name"),
+            (r"^(?:what(?:'s| is)|who\s+is)\s+your\s+name$", "JAI"),
+            (r"^(?:what|who)\s+is\s+(?:my|your|the)\s+(.+?)\s+s\s+name$", None),
             (r"^(?:who\s+am\s+i)$", "user"),
             (r"^(.+?)\s*=\s*\?$", None),
+            (r"^(?:what|who)\s+is\s+(.+?)$", None),
         ]
 
         subject = None
@@ -128,8 +128,8 @@ class ChatSession:
                     subject = forced_subject
                 elif pattern.startswith(r"^(?:what|who)\s+is\s+(?:my|your|the)"):
                     query_match = re.match(
-                        r"^(?:what|who)\s+is\s+(my|your|the)\s+(.+?)['’]s\s+name$",
-                        message.strip(),
+                        r"^(?:what|who)\s+is\s+(my|your|the)\s+(.+?)\s+s\s+name$",
+                        normalized,
                         re.IGNORECASE,
                     )
                     if query_match:
