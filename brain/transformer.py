@@ -1,4 +1,4 @@
-# JAI Version: 0.5.1
+# JAI Version: 0.6.0
 """A trainable decoder-style Transformer built from scratch for JAI."""
 
 import math
@@ -31,7 +31,10 @@ class TransformerLanguageModel:
         self.query_weights = self._matrix(rng, scale)
         self.key_weights = self._matrix(rng, scale)
         self.value_weights = self._matrix(rng, scale)
-        self.output_weights = self._matrix(rng, scale)
+        self.output_weights = [
+            [rng.uniform(-scale, scale) for _ in range(model_size)]
+            for _ in range(vocabulary_size)
+        ]
 
         hidden_size = model_size * 2
         self.ffn_in = [[rng.uniform(-scale, scale) for _ in range(hidden_size)]
@@ -376,7 +379,7 @@ class TransformerLanguageModel:
         from pathlib import Path
 
         data = {
-            "version": "0.5.1",
+            "version": "0.6.0",
             "vocabulary_size": self.vocabulary_size,
             "model_size": self.model_size,
             "context_size": self.context_size,
@@ -398,7 +401,7 @@ class TransformerLanguageModel:
         from pathlib import Path
 
         data = json.loads(Path(path).read_text(encoding="utf-8"))
-        if data.get("version") != "0.5.1":
+        if data.get("version") != "0.6.0":
             raise ValueError("Unsupported JAI Transformer checkpoint version.")
         model = cls(
             data["vocabulary_size"],
