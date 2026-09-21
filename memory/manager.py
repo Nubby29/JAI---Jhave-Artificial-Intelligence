@@ -135,6 +135,44 @@ class MemoryManager:
             lines.append(f"- {content} -> JAI previously replied: {response}" if response else f"- {content}")
         return "\n".join(lines)
 
+    def learn_programming_fact(self, language, subject, relation, value, *, kind="concept", source="conversation", replace=False):
+        """Persist a structured programming-language fact."""
+        language = language.strip().lower()
+        subject = subject.strip()
+        relation = relation.strip()
+        value = value.strip()
+        if not language or not subject or not relation or not value:
+            raise ValueError("Programming facts require language, subject, relation, and value.")
+        if replace:
+            for old in self.programming_facts(language=language, subject=subject, limit=100):
+                meta = old.get("metadata", {})
+                if str(meta.get("relation", "")).lower() != relation.lower():
+                    continue
+                old_id = old.get("memory_id", "")
+                for path in self.organized_root.rglob(f"{old_id}_*.json"):
+                    try:
+                        path.unlink()
+                    except OSError:
+                        pass
+                for path in self.raw_root.rglob(f"{old_id}.json"):
+                    try:
+                        path.unlink()
+                    except OSError:
+                        pass
+        return self.remember(
+            f"{language} {subject} {relation} {value}",
+            source=source,
+            metadata={
+                "type": "programming_fact",
+                "category": "knowledge",
+                "language": language,
+                "subject": subject,
+                "relation": relation,
+                "value": value,
+                "kind": kind,
+            },
+        )
+
     def programming_facts(self, language=None, subject=None, limit=50):
         """Return structured programming-language knowledge learned from conversation."""
         results = []
