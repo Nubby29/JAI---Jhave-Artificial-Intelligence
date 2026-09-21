@@ -1,4 +1,4 @@
-# JAI Version: 0.12.2
+# JAI Version: 0.12.3
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -126,13 +126,13 @@ class ChatSession:
         # Equation queries are checked before normalization because the
         # normalizer removes operators such as "=" and "+".
         equation_query = message.strip()
-        equation_query = re.sub(r"\\s*=\\s*\\?$", "", equation_query)
-        equation_query = re.sub(r"\\s*=\\s*$", "", equation_query)
-        if re.fullmatch(r"[0-9+\\-*/()\\s]+", equation_query):
+        equation_query = re.sub(r"\s*=\s*\?$", "", equation_query)
+        equation_query = re.sub(r"\s*=\s*$", "", equation_query)
+        if re.fullmatch(r"[0-9+\-*/()\s]+", equation_query):
             subject = equation_query.strip()
             facts = self.memory.learned_facts(subject)
             if not facts:
-                compact = re.sub(r"\\s+", "", subject)
+                compact = re.sub(r"\s+", "", subject)
                 for candidate in self.memory.learned_facts(compact):
                     facts = [candidate]
                     break
