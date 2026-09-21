@@ -127,14 +127,13 @@ class ChatSession:
             return []
         learned = []
         for fact in ProgrammingLearner.extract(text):
-            self.memory.remember(
-                f"{fact['language']} {fact['subject']} {fact['relation']} {fact['value']}",
-                source="conversation",
-                metadata={
-                    "type": "programming_fact",
-                    "category": "knowledge",
-                    **fact,
-                },
+            self.memory.learn_programming_fact(
+                fact["language"],
+                fact["subject"],
+                fact["relation"],
+                fact["value"],
+                kind=fact["kind"],
+                replace=replace,
             )
             learned.append(fact)
         return learned
