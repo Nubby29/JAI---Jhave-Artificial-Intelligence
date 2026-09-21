@@ -1,4 +1,4 @@
-# JAI Version: 0.10.6
+# JAI Version: 0.10.7
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -115,6 +115,8 @@ class ChatSession:
             (r"^(?:what(?:'s| is)|who\s+is)\s+my\s+name$", "my name"),
             (r"^(?:what(?:'s| is)|who\s+is)\s+your\s+name$", "JAI"),
             (r"^(?:what|who)\s+is\s+(?:my|your|the)\s+(.+?)\s+s\s+name$", None),
+            (r"^(?:what\s+s|whats)\s+(?:my|your|the)\s+(.+?)\s+s\s+name$", None),
+            (r"^(?:what\s+is|whats)\s+the\s+name\s+of\s+(my|your|the)\s+(.+?)$", None),
             (r"^(?:who\s+am\s+i)$", "user"),
             (r"^(.+?)\s*=\s*\?$", None),
             (r"^(?:what|who)\s+is\s+(.+?)$", None),
@@ -136,6 +138,22 @@ class ChatSession:
                         subject = f"{query_match.group(1).lower()} {query_match.group(2).strip()}"
                     else:
                         subject = match.group(1).strip()
+                elif pattern.startswith(r"^(?:what\s+s|whats)"):
+                    query_match = re.match(
+                        r"^(?:what\s+s|whats)\s+(my|your|the)\s+(.+?)\s+s\s+name$",
+                        normalized,
+                        re.IGNORECASE,
+                    )
+                    if query_match:
+                        subject = f"{query_match.group(1).lower()} {query_match.group(2).strip()}"
+                elif pattern.startswith(r"^(?:what\s+is|whats)\s+the\s+name"):
+                    query_match = re.match(
+                        r"^(?:what\s+is|whats)\s+the\s+name\s+of\s+(my|your|the)\s+(.+?)$",
+                        normalized,
+                        re.IGNORECASE,
+                    )
+                    if query_match:
+                        subject = f"{query_match.group(1).lower()} {query_match.group(2).strip()}"
                 else:
                     subject = match.group(1).strip()
                 break
