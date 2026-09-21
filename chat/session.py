@@ -1,4 +1,4 @@
-# JAI Version: 0.14.6
+# JAI Version: 0.14.7
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -189,7 +189,7 @@ class ChatSession:
         # as <p>, which is meaningful to the programming-language learner.
         original = message.strip()
         match = re.match(
-            r"^(?:create|make|write|generate)\s+(?:a\s+)?(?:sample|simple|basic)?\s*(html|xml)\s+(?:that\s+)?(?:shows?|displays?|contains?)\s+(.+?)\s+inside\s+(<![^>]+>|<[a-zA-Z][a-zA-Z0-9-]*>)\s*[.!?]?$",
+            r"^(?:create|make|write|generate)\s+(?:a|an)\s+(?:sample|simple|basic)?\s*(html|xml)\s+(?:(?:that\s+)?(?:shows?|displays?|contains?)\s+|with\s+)(.+?)\s+inside\s+(<![^>]+>|<[a-zA-Z][a-zA-Z0-9-]*>)\s*[.!?]?$",
             original,
             re.IGNORECASE,
         )
