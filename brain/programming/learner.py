@@ -1,4 +1,4 @@
-# JAI Version: 0.14.2
+# JAI Version: 0.14.10
 """General-purpose programming-language knowledge extraction for JAI."""
 
 from __future__ import annotations
@@ -17,6 +17,17 @@ class ProgrammingLearner:
         for language in sorted(cls.LANGUAGES, key=len, reverse=True):
             if re.search(rf"(?<![a-z0-9+#]){re.escape(language)}(?![a-z0-9+#])", lowered):
                 return language
+
+        # Infer HTML when the training text contains recognizable HTML syntax
+        # even if the user does not explicitly say the word "HTML".
+        if re.search(r"<!doctype\s+html\b", lowered):
+            return "html"
+        if re.search(
+            r"<(?:html|head|body|title|p|h[1-6]|div|span|a|img|ul|ol|li|table|form|button|input)(?:\s|>)",
+            lowered,
+        ):
+            return "html"
+
         return None
 
     @classmethod
