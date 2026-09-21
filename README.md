@@ -4,9 +4,9 @@
 
 ## Current Version
 
-**JAI 0.2.0 — The First Tiny Language Model**
+**JAI 0.3.0 — Attention / Transformer Foundations**
 
-JAI can now learn a simple next-token prediction task. Text is tokenized into IDs, a small neural language model turns recent token IDs into a context representation, and a softmax output produces a probability for every possible next token.
+JAI now has a from-scratch implementation of single-head scaled dot-product self-attention and a minimal Transformer-style residual block. The 0.2.0 language model remains the trained language-model baseline while these Transformer mechanics are developed and tested separately.
 
 This is intentionally tiny and educational. It is **not an LLM** and does not use pretrained weights or external machine-learning libraries.
 
@@ -48,9 +48,19 @@ This is intentionally tiny and educational. It is **not an LLM** and does not us
 - SGD training
 - Next-token prediction
 
+### 0.3.0 — Attention / Transformer Foundations
+- Query, key, and value projections
+- Scaled dot-product attention
+- Attention probability matrix
+- Attention-weighted value mixing
+- Residual connection
+- Inspectable Transformer-style block
+
 ## How JAI Learns Language
 
-Text -> Tokenizer -> Token IDs -> Recent context -> Learned embeddings -> Softmax -> Next-token probabilities -> Loss -> Gradient descent
+Text -> Tokenizer -> Token IDs -> Embeddings -> Attention -> Context-aware representations -> Next-token probabilities -> Loss -> Gradient descent
+
+At 0.3.0, attention is implemented as a foundation and inspection tool. It is not yet the complete trained Transformer language model.
 
 ## Important Note
 
@@ -65,6 +75,7 @@ JAI is still extremely small. The current model uses averaged embeddings rather 
 | 0.0.3 | Backpropagation |
 | 0.1.0 | Tokenizer |
 | **0.2.0** | **Tiny language model** |
+| **0.3.0** | **Attention / Transformer foundations** |
 | 0.3 | Transformer/attention foundations |
 | 0.5 | External memory |
 | 1.0 | Local JAI system |
