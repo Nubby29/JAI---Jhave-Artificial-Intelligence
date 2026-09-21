@@ -1,4 +1,4 @@
-# JAI Version: 0.10.5
+# JAI Version: 0.10.6
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -178,6 +178,8 @@ class ChatSession:
             normalized_subject = self._normalize(learned_subject)
             if normalized_subject == "jai":
                 return f"My name is {value}."
+            if normalized_subject == "my name":
+                return f"Your name is {value}."
             if normalized_subject.startswith("my "):
                 thing = learned_subject[3:].strip()
                 return f"Your {thing}'s name is {value}."
