@@ -1,4 +1,4 @@
-# JAI Version: 0.12.0
+# JAI Version: 0.13.0
 """Tests for communication-based learning, yes/no questions, and learned-answer priority."""
 
 import tempfile
@@ -56,6 +56,25 @@ class ChatSessionLearningTests(unittest.TestCase):
             self.assertIn("2 items", chat.reply("--train yes means agree, no means disagree"))
             self.assertEqual(chat.reply("What is yes?"), "yes means agree.")
             self.assertEqual(chat.reply("What is no?"), "no means disagree.")
+
+    def test_calculation_reasoning_handles_natural_language(self):
+        with tempfile.TemporaryDirectory() as directory:
+            memory = MemoryManager(Path(directory) / "memory")
+            chat = ChatSession(DummyModel(), DummyTokenizer(), memory=memory, bootstrap=True)
+
+            self.assertEqual(chat.reply("add 1 and 2"), "3.")
+            self.assertEqual(chat.reply("what is 5 plus 7?"), "12.")
+            self.assertEqual(chat.reply("subtract 3 from 10"), "7.")
+            self.assertEqual(chat.reply("multiply 4 by 5"), "20.")
+            self.assertEqual(chat.reply("20 divided by 4"), "5.")
+
+    def test_calculation_reasoning_respects_operator_precedence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            memory = MemoryManager(Path(directory) / "memory")
+            chat = ChatSession(DummyModel(), DummyTokenizer(), memory=memory, bootstrap=True)
+
+            self.assertEqual(chat.reply("2 + 3 * 4"), "14.")
+            self.assertEqual(chat.reply("(2 + 3) * 4"), "20.")
 
     def test_fix_then_natural_question_uses_updated_fact(self):
         with tempfile.TemporaryDirectory() as directory:
