@@ -1,4 +1,4 @@
-# JAI Version: 0.13.0
+# JAI Version: 0.14.0
 """JAI — instant-start interactive chat with optional model training."""
 
 import sys
@@ -77,7 +77,7 @@ def main() -> None:
         bootstrap=bootstrap,
     )
 
-    print("JAI 0.13.0 — Interactive Chat + Permanent Memory")
+    print("JAI 0.14.0 — Interactive Chat + Permanent Memory")
     if bootstrap:
         print("Chat-ready mode: no trained checkpoint found.")
         print("Run 'python main.py --train' once to train the language model.")
