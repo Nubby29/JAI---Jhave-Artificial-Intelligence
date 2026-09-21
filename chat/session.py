@@ -1,4 +1,4 @@
-# JAI Version: 0.14.0
+# JAI Version: 0.14.1
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -145,13 +145,19 @@ class ChatSession:
         normalized = self._normalize(message)
 
         # "What does <p> do?" / "What is <p>?"
-        tag_match = re.search(r"(?:what\s+does|what\s+is)\s+(<[a-zA-Z][a-zA-Z0-9-]*>)", message, re.IGNORECASE)
-        if tag_match:
-            tag = tag_match.group(1).lower()
+        # Query HTML/XML elements and declarations directly.
+        construct_match = re.search(
+            r"(?:what\s+does|what\s+is)\s+(<![^>]+>|<[a-zA-Z][a-zA-Z0-9-]*>)",
+            message,
+            re.IGNORECASE,
+        )
+        if construct_match:
+            construct = construct_match.group(1).lower()
             for fact in self.memory.programming_facts(limit=100):
                 meta = fact.get("metadata", {})
-                if str(meta.get("subject", "")).lower().endswith(" " + tag):
-                    return f"{tag} {meta.get('relation', 'defines')} {meta.get('value', '')}."
+                stored = str(meta.get("subject", "")).lower()
+                if stored.endswith(" " + construct):
+                    return f"{construct_match.group(1)} {meta.get('relation', 'defines')} {meta.get('value', '')}."
         # "What does HTML stand for?" and similar language-level questions.
         match = re.match(r"^(?:what\s+does|what\s+is)\s+(.+?)\s+(?:stand\s+for|mean|used\s+for)$", normalized)
         if match:
