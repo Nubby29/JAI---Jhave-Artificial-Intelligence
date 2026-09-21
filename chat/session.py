@@ -1,7 +1,8 @@
-# JAI Version: 0.12.4
+# JAI Version: 0.13.0
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
+from brain.reasoning.calculator import Calculator
 from chat.corpus import DIALOGUES
 
 
@@ -118,6 +119,18 @@ class ChatSession:
             facts.append({"subject": "statement", "relation": "learned", "value": text})
 
         return facts or None
+
+    def _answer_from_calculation(self, message):
+        """Use JAI's reasoning layer to solve safe arithmetic requests."""
+        result = Calculator.from_language(message)
+        if result is None:
+            return None
+        expression, value = result
+        if isinstance(value, float) and not value.is_integer():
+            display = f"{value:.10g}"
+        else:
+            display = str(value)
+        return f"{display}."
 
     def _answer_from_learning(self, message):
         """Answer questions using facts explicitly learned through conversation."""
@@ -346,6 +359,8 @@ class ChatSession:
                 raw = f"I understand. You are teaching me {len(learned)} things, and I will remember them."
         else:
             raw = self._answer_from_learning(message)
+            if raw is None:
+                raw = self._answer_from_calculation(message)
             if raw is None:
                 if self.bootstrap:
                     raw = self._bootstrap_reply(message)
