@@ -191,9 +191,9 @@ class ChatSession:
         # "create an html with hello world inside the <p>"
         # "create a sample html that shows hello world inside the <p>"
         request = re.match(
-            r"^(?:create|make|write|generate)\\s+(?:a|an)\\s+(?:sample|simple|basic)?" 
-            r"\\s*(html|xml)\\s+(.+?)\\s+inside\\s+(<![^>]+>|<[a-zA-Z][a-zA-Z0-9-]*>)"
-            r"\\s*[.!?]?$",
+            r"^(?:create|make|write|generate)\s+(?:a|an)\s+(?:sample|simple|basic)?" 
+            r"\s*(html|xml)\s+(.+?)\s+inside\s+(<![^>]+>|<[a-zA-Z][a-zA-Z0-9-]*>)"
+            r"\s*[.!?]?$",
             original,
             re.IGNORECASE,
         )
@@ -209,14 +209,14 @@ class ChatSession:
 
         # Extract the requested text from common wording.
         content_match = re.search(
-            r"^(?:that\\s+)?(?:shows?|displays?|contains?)\\s+(.+)$",
+            r"^(?:that\s+)?(?:shows?|displays?|contains?)\s+(.+)$",
             before_inside,
             re.IGNORECASE,
         )
         if content_match:
             content = content_match.group(1).strip().rstrip(" .!?")
         else:
-            with_match = re.match(r"^with\\s+(.+)$", before_inside, re.IGNORECASE)
+            with_match = re.match(r"^with\s+(.+)$", before_inside, re.IGNORECASE)
             if not with_match:
                 return None
             content = with_match.group(1).strip().rstrip(" .!?")
