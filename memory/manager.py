@@ -1,4 +1,4 @@
-# JAI Version: 0.11.0
+# JAI Version: 0.14.0
 """Persistent memory and structured knowledge learned through communication."""
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ class MemoryManager:
         self.root=Path(root); self.raw_root=self.root/"raw"; self.organized_root=self.root/"organized"; self.index_path=self.root/"index.json"
         self.root.mkdir(parents=True,exist_ok=True); self.raw_root.mkdir(parents=True,exist_ok=True); self.organized_root.mkdir(parents=True,exist_ok=True)
         for category in self.CATEGORIES: (self.organized_root/category).mkdir(parents=True,exist_ok=True)
-        if not self.index_path.exists(): self._write_json(self.index_path,{"version":"0.11.0","encounters":0,"records":0})
+        if not self.index_path.exists(): self._write_json(self.index_path,{"version":"0.14.0","encounters":0,"records":0})
 
     @staticmethod
     def _timestamp(): return datetime.now(timezone.utc).isoformat()
@@ -27,7 +27,7 @@ class MemoryManager:
         try: return json.loads(self.index_path.read_text(encoding="utf-8"))
         except (FileNotFoundError,json.JSONDecodeError): return {"version":"0.11.0","encounters":0,"records":0}
     def _update_index(self,encounter_delta=0,record_delta=0):
-        index=self._read_index(); index["version"]="0.11.0"; index["encounters"]=index.get("encounters",0)+encounter_delta; index["records"]=index.get("records",0)+record_delta; self._write_json(self.index_path,index)
+        index=self._read_index(); index["version"]="0.14.0"; index["encounters"]=index.get("encounters",0)+encounter_delta; index["records"]=index.get("records",0)+record_delta; self._write_json(self.index_path,index)
 
     def _category_for(self,text):
         lowered=text.lower()
@@ -134,6 +134,28 @@ class MemoryManager:
             content=memory.get("content","").replace("\n"," "); response=memory.get("response","").replace("\n"," ")
             lines.append(f"- {content} -> JAI previously replied: {response}" if response else f"- {content}")
         return "\n".join(lines)
+
+    def programming_facts(self, language=None, subject=None, limit=50):
+        """Return structured programming-language knowledge learned from conversation."""
+        results = []
+        language = language.strip().lower() if language else None
+        subject = subject.strip().lower() if subject else None
+        for category in self.CATEGORIES:
+            for path in (self.organized_root / category).rglob("*.json"):
+                try:
+                    record = json.loads(path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    continue
+                meta = record.get("metadata", {})
+                if meta.get("type") != "programming_fact":
+                    continue
+                if language and str(meta.get("language", "")).lower() != language:
+                    continue
+                if subject and str(meta.get("subject", "")).strip().lower() != subject:
+                    continue
+                results.append(record)
+        results.sort(key=lambda item: item.get("created_at", ""), reverse=True)
+        return results[:max(0, limit)]
 
     def stats(self):
         index=self._read_index()
