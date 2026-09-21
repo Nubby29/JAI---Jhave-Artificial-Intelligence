@@ -1,44 +1,72 @@
-# JAI Version: 0.5.1
-"""JAI — a trainable decoder-style Transformer."""
+# JAI Version: 0.6.0
+"""JAI — the first interactive chat version."""
+
+from pathlib import Path
 
 from brain.transformer import TransformerLanguageModel
+from chat.corpus import DIALOGUES
+from chat.session import ChatSession
 from tokenizer.tokenizer import Tokenizer
 from training.trainer import train_transformer_language_model
 
 
-def main() -> None:
-    texts = [
-        "JAI learns from examples.",
-        "JAI learns from data.",
-        "JAI thinks about words.",
-        "JAI predicts the next token.",
-    ]
+CHECKPOINT = Path("jai_chat_model.json")
+VOCABULARY = Path("jai_chat_vocab.json")
+
+
+def build_chat_model():
+    texts = [f"User: {user}\nJAI: {assistant}" for user, assistant in DIALOGUES]
     tokenizer = Tokenizer()
     tokenizer.build_vocabulary(texts)
-    sequences = [tokenizer.encode(text, add_bos=True, add_eos=True) for text in texts]
 
+    if CHECKPOINT.exists() and VOCABULARY.exists():
+        loaded_tokenizer = Tokenizer.load(VOCABULARY)
+        model = TransformerLanguageModel.load(CHECKPOINT)
+        if len(loaded_tokenizer.tokens) == model.vocabulary_size:
+            return model, loaded_tokenizer
+
+    sequences = [
+        tokenizer.encode(text, add_bos=True, add_eos=True)
+        for text in texts
+    ]
     model = TransformerLanguageModel(
         len(tokenizer.tokens),
         model_size=8,
-        context_size=8,
+        context_size=32,
         seed=7,
     )
     history = train_transformer_language_model(
-        model, sequences, learning_rate=0.03, epochs=120
+        model,
+        sequences,
+        learning_rate=0.025,
+        epochs=80,
     )
+    model.save(CHECKPOINT)
+    tokenizer.save(VOCABULARY)
+    print(f"Training complete: {history[0]:.4f} -> {history[-1]:.4f}")
+    return model, tokenizer
 
-    prompt = tokenizer.encode("JAI learns", add_bos=True)
-    probabilities, attention = model.forward(prompt)
-    next_id = max(range(len(probabilities)), key=probabilities.__getitem__)
 
-    print("JAI 0.4.1 — Transformer Backpropagation")
-    print(f"Vocabulary size: {len(tokenizer.tokens)}")
-    print(f"Model parameters: {model.parameter_count()}")
-    print(f"Initial loss: {history[0]:.4f}")
-    print(f"Final loss: {history[-1]:.4f}")
-    print(f"Prompt: {tokenizer.decode(prompt, skip_special=True)!r}")
-    print(f"Predicted next token: {tokenizer.id_to_token[next_id]!r}")
-    print(f"Attention rows: {len(attention)}")
+def main() -> None:
+    model, tokenizer = build_chat_model()
+    chat = ChatSession(model, tokenizer, max_new_tokens=32, temperature=0.35)
+
+    print("JAI 0.6.0 — Interactive Chat")
+    print("Type 'exit' to stop.")
+    print()
+
+    while True:
+        try:
+            message = input("You: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nJAI: Goodbye!")
+            break
+
+        if message.lower() in {"exit", "quit"}:
+            print("JAI: Goodbye!")
+            break
+
+        print(f"JAI: {chat.reply(message)}")
 
 
 if __name__ == "__main__":
