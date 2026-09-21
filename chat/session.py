@@ -1,4 +1,4 @@
-# JAI Version: 0.10.7
+# JAI Version: 0.11.0
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -38,14 +38,14 @@ class ChatSession:
             )
         ) is not None
 
-    def _extract_learning(self, message):
+    def _extract_learning(self, message, force=False, replace=False):
         """Recognize natural teaching statements and store one or more facts."""
         if self.memory is None:
             return None
 
         text = message.strip()
 
-        if self._is_question(text):
+        if self._is_question(text) and not force:
             return None
 
         facts = []
@@ -54,7 +54,7 @@ class ChatSession:
             subject = subject.strip(" .!?")
             value = value.strip(" .!?")
             if subject and value:
-                self.memory.learn_fact(subject, relation, value)
+                self.memory.learn_fact(subject, relation, value, replace=replace)
                 facts.append({"subject": subject, "relation": relation, "value": value})
 
         # Handle name statements specially so pronouns and relationships are given stable meanings.
@@ -102,6 +102,10 @@ class ChatSession:
             left = left.strip(" .,:;")
             if re.fullmatch(r"[0-9+\-*/()\s]+", left):
                 add(left, "equals", right)
+
+        if not facts and force and text:
+            self.memory.learn_statement(text, replace=replace)
+            facts.append({"subject": "statement", "relation": "learned", "value": text})
 
         return facts or None
 
@@ -251,9 +255,31 @@ class ChatSession:
         sections.append(f"User: {message.strip()}\nJAI:")
         return "\n\n".join(sections)
 
+    def _handle_learning_trigger(self, message):
+        """Handle explicit --train and --fix commands inside the chat."""
+        match = re.match(r"^--(train|fix)\s*(.*)$", message.strip(), re.IGNORECASE | re.DOTALL)
+        if not match:
+            return None
+
+        mode, payload = match.group(1).lower(), match.group(2).strip()
+        if not payload:
+            return f"Usage: --{mode} <information to {'learn' if mode == 'train' else 'correct'}>."
+
+        facts = self._extract_learning(payload, force=True, replace=(mode == "fix"))
+        if mode == "fix":
+            return f"I corrected {len(facts or [])} learned item{'s' if len(facts or []) != 1 else ''}. I will use the updated information."
+        return f"I learned {len(facts or [])} item{'s' if len(facts or []) != 1 else ''} from this training instruction."
+
     def reply(self, message):
         if not message.strip():
             return "Please say something so I have something to respond to."
+
+        triggered = self._handle_learning_trigger(message)
+        if triggered is not None:
+            self.history.append((message.strip(), triggered))
+            if self.memory is not None:
+                self.memory.remember_conversation(message.strip(), triggered)
+            return triggered
 
         learned = self._extract_learning(message)
         if learned:
@@ -263,6 +289,10 @@ class ChatSession:
                     raw = f"I learned that my name is {fact['value']}. I will remember it."
                 elif fact["subject"] == "my name" and fact["relation"] == "name":
                     raw = f"I learned that your name is {fact['value']}. I will remember it."
+                elif fact["relation"] == "name" and fact["subject"].lower().startswith(("my ", "your ", "the ")):
+                    owner, thing = fact["subject"].split(" ", 1)
+                    possessive = "your" if owner.lower() in {"my", "your"} else "the"
+                    raw = f"I learned that {possessive} {thing}'s name is {fact['value']}. I will remember it."
                 else:
                     raw = f"I learned that {fact['subject']} {fact['relation']} {fact['value']}. I will remember it."
             else:
