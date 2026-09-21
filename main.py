@@ -1,32 +1,38 @@
-# JAI Version: 0.0.1
-"""JAI — the first executable seed."""
+# JAI Version: 0.0.3
+"""JAI — the first learning neural network."""
 
-from brain.neuron import Neuron
-from training.trainer import train_neuron
+from brain.network import NeuralNetwork
+from training.trainer import train_network
 
 
 def main() -> None:
-    # A tiny dataset: JAI learns whether a number is on the
-    # positive side of the boundary.
+    jai = NeuralNetwork(input_size=2, hidden_size=4, output_size=1, seed=7)
+
     samples = [
-        (-2.0, 0.0),
-        (-1.0, 0.0),
-        (1.0, 1.0),
-        (2.0, 1.0),
+        ([0.0, 0.0], [0.0]),
+        ([0.0, 1.0], [1.0]),
+        ([1.0, 0.0], [1.0]),
+        ([1.0, 1.0], [1.0]),
     ]
 
-    jai = Neuron()
-    history = train_neuron(jai, samples, learning_rate=1.0, epochs=1000)
+    initial_loss = sum(
+        (jai.forward(inputs)[0] - targets[0]) ** 2
+        for inputs, targets in samples
+    ) / len(samples)
 
-    print("JAI 0.0.1 — The Seed")
-    print(f"Learned weight: {jai.weight:.4f}")
-    print(f"Learned bias:   {jai.bias:.4f}")
-    print(f"Final loss:     {history[-1]:.6f}")
+    history = train_network(jai, samples, learning_rate=2.0, epochs=2000)
 
-    for x, target in samples:
-        prediction = jai.forward(x)
+    print("JAI 0.0.3 — Learning Through Backpropagation")
+    print("Architecture: 2 inputs -> 4 hidden -> 1 output")
+    print(f"Trainable parameters: {jai.parameter_count()}")
+    print(f"Initial loss: {initial_loss:.6f}")
+    print(f"Final loss:   {history[-1]:.6f}")
+
+    print("\nLearned responses:")
+    for inputs, targets in samples:
+        prediction = jai.forward(inputs)[0]
         print(
-            f"x={x:>4.1f} | target={target:.1f} | "
+            f"inputs={inputs} | target={targets[0]:.1f} | "
             f"prediction={prediction:.4f}"
         )
 
