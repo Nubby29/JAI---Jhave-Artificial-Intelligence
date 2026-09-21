@@ -82,7 +82,7 @@ This is still a small educational language model, **not an LLM**. It has no pret
 - Interactive terminal conversation
 - User/JAI prompt formatting
 
-### 0.7.0 — Persistent Memory
+### 0.8.0 — Permanent Memory + Instant-Start Chat
 - Permanent `memory/` root
 - Raw encounter archive
 - Organized memory categories
@@ -229,7 +229,7 @@ These limitations are intentional. We are building the components ourselves so w
 | 0.5.0 / 0.5.1 | Checkpoints + generation |
 | 0.6.0 | Interactive chat |
 | **0.7.0** | **Persistent memory** |
-| 0.8.0 | Semantic understanding + larger corpus |
+| 0.8.0 | Instant-start chat + permanent memory |
 | 0.9.0 | Better tokenizer, retrieval, and training pipeline |
 | 1.0.0 | Local JAI system |
 | 1.x | Task planning, skills, experience learning, and autonomous memory use |
