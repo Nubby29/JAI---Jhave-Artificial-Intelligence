@@ -57,7 +57,7 @@ class MemoryManager:
 
     def remember(self,content,*,response="",source="encounter",metadata=None):
         if not content.strip(): raise ValueError("Memory content cannot be empty.")
-        now=datetime.now(timezone.utc); encounter_id=now.strftime("%Y%m%dT%H%M%S%fZ"); category=self._category_for(content+" "+response)
+        now=datetime.now(timezone.utc); encounter_id=now.strftime("%Y%m%dT%H%M%S%fZ"); category=(metadata or {}).get("category") or self._category_for(content+" "+response)
         record=self._make_record(category,encounter_id,content,response,{"source":source,**(metadata or {})})
         raw={"version":"0.9.0","memory_id":encounter_id,"created_at":record["created_at"],"source":source,"content":content,"response":response,"organized_category":category,"metadata":metadata or {}}
         self._write_json(self.raw_root/now.strftime("%Y")/now.strftime("%m")/f"{encounter_id}.json",raw)
@@ -70,7 +70,7 @@ class MemoryManager:
     def learn_fact(self,subject,relation,value,*,source="conversation"):
         subject=subject.strip(); relation=relation.strip(); value=value.strip()
         if not subject or not relation or not value: raise ValueError("Learned facts require subject, relation, and value.")
-        return self.remember(f"{subject} {relation} {value}",source=source,metadata={"type":"learned_fact","subject":subject,"relation":relation,"value":value})
+        return self.remember(f"{subject} {relation} {value}",source=source,metadata={"type":"learned_fact","category":"knowledge","subject":subject,"relation":relation,"value":value})
 
     def learned_facts(self,subject):
         target=subject.strip().lower(); facts=[]
