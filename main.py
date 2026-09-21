@@ -1,6 +1,7 @@
-# JAI Version: 0.7.0
-"""JAI — interactive chat with persistent long-term memory."""
+# JAI Version: 0.8.0
+"""JAI — instant-start interactive chat with optional model training."""
 
+import sys
 from pathlib import Path
 
 from brain.transformer import TransformerLanguageModel
@@ -16,16 +17,29 @@ VOCABULARY = Path("jai_chat_vocab.json")
 MEMORY_ROOT = Path("memory")
 
 
-def build_chat_model():
+def build_chat_model(train: bool = False):
+    """Load a trained model instantly, or train only when explicitly requested."""
     texts = [f"User: {user}\nJAI: {assistant}" for user, assistant in DIALOGUES]
     tokenizer = Tokenizer()
     tokenizer.build_vocabulary(texts)
 
     if CHECKPOINT.exists() and VOCABULARY.exists():
-        loaded_tokenizer = Tokenizer.load(VOCABULARY)
-        model = TransformerLanguageModel.load(CHECKPOINT)
-        if len(loaded_tokenizer.tokens) == model.vocabulary_size:
-            return model, loaded_tokenizer
+        try:
+            loaded_tokenizer = Tokenizer.load(VOCABULARY)
+            model = TransformerLanguageModel.load(CHECKPOINT)
+            if len(loaded_tokenizer.tokens) == model.vocabulary_size:
+                return model, loaded_tokenizer, False
+        except (ValueError, KeyError, OSError):
+            pass
+
+    if not train:
+        model = TransformerLanguageModel(
+            len(tokenizer.tokens),
+            model_size=8,
+            context_size=32,
+            seed=7,
+        )
+        return model, tokenizer, True
 
     sequences = [
         tokenizer.encode(text, add_bos=True, add_eos=True)
@@ -47,21 +61,28 @@ def build_chat_model():
     model.save(CHECKPOINT)
     tokenizer.save(VOCABULARY)
     print(f"Training complete: {history[0]:.4f} -> {history[-1]:.4f}")
-    return model, tokenizer
+    return model, tokenizer, False
 
 
 def main() -> None:
+    train = "--train" in sys.argv[1:]
     memory = MemoryManager(MEMORY_ROOT)
-    model, tokenizer = build_chat_model()
+    model, tokenizer, bootstrap = build_chat_model(train=train)
     chat = ChatSession(
         model,
         tokenizer,
         memory=memory,
         max_new_tokens=32,
         temperature=0.35,
+        bootstrap=bootstrap,
     )
 
-    print("JAI 0.7.0 — Interactive Chat + Permanent Memory")
+    print("JAI 0.8.0 — Interactive Chat + Permanent Memory")
+    if bootstrap:
+        print("Chat-ready mode: no trained checkpoint found.")
+        print("Run 'python main.py --train' once to train the language model.")
+    else:
+        print("Trained language model loaded.")
     print("Type 'exit' to stop.")
     stats = memory.stats()
     print(
