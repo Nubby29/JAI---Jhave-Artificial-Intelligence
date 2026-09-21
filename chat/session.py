@@ -1,4 +1,4 @@
-# JAI Version: 0.14.4
+# JAI Version: 0.14.5
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
