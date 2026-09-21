@@ -125,6 +125,7 @@ class Calculator:
             (r"^(?:add|sum)\s+(.+?)\s+and\s+(.+)$", lambda a, b: f"{a}+{b}"),
             (r"^(.+?)\s+plus\s+(.+)$", lambda a, b: f"{a}+{b}"),
             (r"^(.+?)\s+minus\s+(.+)$", lambda a, b: f"{a}-{b}"),
+            (r"^(?:multiply|multiplied)\s+(.+?)\s+(?:and|by)\s+(.+)$", lambda a, b: f"{a}*{b}"),
             (r"^(.+?)\s+times\s+(.+)$", lambda a, b: f"{a}*{b}"),
             (r"^(.+?)\s+multiplied\s+by\s+(.+)$", lambda a, b: f"{a}*{b}"),
             (r"^(.+?)\s+divided\s+by\s+(.+)$", lambda a, b: f"{a}/{b}"),
