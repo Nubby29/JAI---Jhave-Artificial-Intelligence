@@ -4,11 +4,11 @@
 
 ## Current Version
 
-**JAI 0.5.1 — Trainable Transformer + Checkpoints + Generation**
+**JAI 0.6.0 — Interactive Chat**
 
-JAI now trains its decoder-style Transformer end-to-end using analytical backpropagation implemented with Python's standard library.
+JAI can now train its own tiny decoder Transformer from a built-in dialogue dataset and use the learned parameters in an interactive terminal chat.
 
-This remains a tiny educational model. It is **not an LLM**, and it does not use pretrained weights or external machine-learning libraries.
+This is a small educational language model, **not an LLM**. It has no pretrained weights and no external machine-learning libraries.
 
 ## What JAI Has Built
 
@@ -54,7 +54,6 @@ This remains a tiny educational model. It is **not an LLM**, and it does not use
 - Attention probability matrix
 - Attention-weighted value mixing
 - Residual connection
-- Inspectable Transformer-style block
 
 ### 0.4.0 — Decoder-Style Transformer
 - Token embeddings
@@ -66,31 +65,46 @@ This remains a tiny educational model. It is **not an LLM**, and it does not use
 - Next-token softmax output
 
 ### 0.4.1 — Transformer Backpropagation
-- Cross-entropy gradient
-- Output projection gradients
-- Feed-forward gradients
-- Layer-normalization gradients
-- Attention softmax gradients
-- Query/key/value gradients
-- Embedding gradients
+- Analytical gradients through the Transformer
 - End-to-end SGD
-- Token generation
+- Next-token generation
 
 ### 0.5.0 / 0.5.1 — Persistence and Generation
 - JSON model checkpoints
 - Model loading
-- Temperature-based sampling
-- Configurable generation length
+- Temperature-based generation
+- Reusable generated-token interface
 
-## How JAI Learns
+### 0.6.0 — Interactive Chat
+- Built-in dialogue training set
+- Automatic first-run training
+- Saved model and vocabulary
+- Interactive terminal conversation
+- Basic conversation history
+- User/JAI prompt formatting
 
-Text -> Tokenizer -> Token IDs -> Transformer -> Next-token probabilities -> Loss -> Backpropagation -> Gradient descent -> Updated parameters
+## How JAI Works
 
-At 0.4.1, JAI can actually change its Transformer parameters from examples instead of only running a forward pass.
+Text -> Tokenizer -> Token IDs -> Embeddings -> Causal Attention -> Feed-Forward Network -> Next-token probabilities -> Loss -> Backpropagation -> Updated parameters -> Generation -> Chat response
 
-## Important Note
+The important part is that the chat responses come from the Transformer parameters that JAI trained from examples. There is no pretrained language model behind it.
 
-JAI is intentionally tiny. A model this small and trained on a tiny dataset will not produce general human-level language. The purpose is to understand and build the machinery ourselves.
+## Running JAI
+
+Requires Python 3.10+.
+
+    python main.py
+    python -m unittest discover -s tests -v
+
+The first chat run trains a small model and creates:
+- `jai_chat_model.json`
+- `jai_chat_vocab.json`
+
+Later runs reuse those files.
+
+## Current Limitations
+
+JAI is deliberately tiny. The chat model has a small vocabulary, a small dataset, one Transformer block, and a short context window. It can demonstrate learned conversational patterns, but it will not have the broad knowledge or fluency of a modern large language model.
 
 ## Roadmap
 
@@ -104,11 +118,11 @@ JAI is intentionally tiny. A model this small and trained on a tiny dataset will
 | 0.3.0 | Attention / Transformer foundations |
 | 0.4.0 | Decoder-style Transformer forward pass |
 | 0.4.1 | Transformer backpropagation + generation |
-| **0.5.0 / 0.5.1** | **Checkpoints + improved generation** |
-| 0.5.0 | Training data and checkpoint persistence |
-| 0.5.1 | Text generation improvements |
-| 0.6.0 | Interactive chat |
+| 0.5.0 / 0.5.1 | Checkpoints + generation |
+| **0.6.0** | **Interactive chat** |
 | 0.7.0 | Conversation memory |
+| 0.8.0 | Larger training corpus |
+| 0.9.0 | Better tokenizer and training pipeline |
 | 1.0.0 | Local JAI system |
 
 ## Principles
@@ -120,10 +134,3 @@ JAI is intentionally tiny. A model this small and trained on a tiny dataset will
 - Version every meaningful step.
 - Test what JAI learns.
 - Document how each part works.
-
-## Running
-
-Requires Python 3.10+.
-
-    python main.py
-    python -m unittest discover -s tests -v
