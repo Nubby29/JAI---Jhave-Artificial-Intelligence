@@ -1,4 +1,4 @@
-# JAI Version: 0.4.1
+# JAI Version: 0.5.1
 """JAI — a trainable decoder-style Transformer."""
 
 from brain.transformer import TransformerLanguageModel
