@@ -1,4 +1,4 @@
-# JAI Version: 0.9.1
+# JAI Version: 0.10.0
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -26,47 +26,42 @@ class ChatSession:
         return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
 
     def _extract_learning(self, message):
-        """Turn common teaching statements into durable structured facts."""
+        """Recognize natural teaching statements and store one or more facts."""
         if self.memory is None:
             return None
-
         text = message.strip()
-        patterns = [
-            (r"^(?:please\s+)?remember(?:\s+that)?\s+my\s+name\s+is\s+(.+?)\.?$", "name", "user"),
-            (r"^(?:please\s+)?remember(?:\s+that)?\s+(.+?)\s+is\s+(.+?)\.?$", "is", None),
-            (r"^(?:please\s+)?remember(?:\s+that)?\s+(.+?)\s+means\s+(.+?)\.?$", "means", None),
-            (r"^(?:actually|no),?\s+(.+?)\s+is\s+(.+?)\.?$", "is", None),
-            (r"^(?:the\s+)?capital\s+of\s+(.+?)\s+is\s+(.+?)\.?$", "capital_of", None),
-            (r"^(.+?)\s+equals\s+(.+?)\.?$", "equals", None),
-            (r"^i\s+am\s+(.+?)\.?$", "identity", "user"),
-            (r"^my\s+name\s+is\s+(.+?)\.?$", "name", "user"),
-        ]
-
-        for pattern, relation, subject_override in patterns:
-            match = re.match(pattern, text, re.IGNORECASE)
-            if not match:
-                continue
-
-            if subject_override == "user" and relation == "name":
-                subject, value = "my name", match.group(1)
-            elif subject_override == "user" and relation == "identity":
-                subject, value = "user", match.group(1)
-            else:
-                subject, value = match.group(1), match.group(2)
-
+        facts = []
+        def add(subject, relation, value):
             subject = subject.strip(" .!?")
             value = value.strip(" .!?")
-            if relation == "capital_of":
-                subject, value = value, subject
-
-            if len(subject) < 1 or not value:
-                continue
-
-            self.memory.learn_fact(subject, relation, value)
-            return {"subject": subject, "relation": relation, "value": value}
-
-        return None
-
+            if subject and value:
+                self.memory.learn_fact(subject, relation, value)
+                facts.append({"subject": subject, "relation": relation, "value": value})
+        patterns = [
+            (r"^(?:please\s+)?remember(?:\s+that)?\s+my\s+name\s+is\s+(.+?)\.?$", "my name", "name"),
+            (r"^my\s+name\s+is\s+(.+?)\.?$", "my name", "name"),
+            (r"^i\s+am\s+(.+?)\.?$", "user", "identity"),
+            (r"^(?:actually|no),?\s+(.+?)\s+is\s+(.+?)\.?$", null, "is"),
+            (r"^(?:please\s+)?remember(?:\s+that)?\s+(.+?)\s+means\s+(.+?)\.?$", null, "means"),
+            (r"^(.+?)\s+uses\s+(.+?)\.?$", null, "uses"),
+            (r"^(.+?)\s+is\s+used\s+for\s+(.+?)\.?$", null, "used_for"),
+            (r"^(.+?)\s+is\s+(.+?)\.?$", null, "is"),
+            (r"^(.+?)\s+equals\s+(.+?)\.?$", null, "equals"),
+        ]
+        for pattern, fixed_subject, relation in patterns:
+            match = re.match(pattern, text, re.IGNORECASE)
+            if match:
+                if fixed_subject:
+                    add(fixed_subject, relation, match.group(1))
+                else:
+                    add(match.group(1), relation, match.group(2))
+                break
+        equation_matches = re.findall(r"(?:(?:example|for\s+example)\s+)?([^=.!?]+?)\s*=\s*([0-9]+(?:\.[0-9]+)?)", text, re.IGNORECASE)
+        for left, right in equation_matches:
+            left = left.strip(" .,:;")
+            if re.fullmatch(r"[0-9+\-*/()\s]+", left):
+                add(left, "equals", right)
+        return facts or None
     def _answer_from_learning(self, message):
         """Answer questions using facts explicitly learned through conversation."""
         if self.memory is None:
@@ -77,6 +72,7 @@ class ChatSession:
             (r"^(?:what|who)\s+is\s+(.+?)$", None),
             (r"^(?:what(?:'s| is)\s+my\s+name)$", "my name"),
             (r"^(?:who\s+am\s+i)$", "user"),
+            (r"^(.+?)\s*=\s*\?$", None),
         ]
 
         subject = None
@@ -115,6 +111,10 @@ class ChatSession:
             return f"{learned_subject} means {value}."
         if relation == "equals":
             return f"{learned_subject} equals {value}."
+        if relation == "uses":
+            return f"{learned_subject} uses {value}."
+        if relation == "used_for":
+            return f"{learned_subject} is used for {value}."
         if relation == "identity":
             return f"You are {value}."
         if relation == "name":
@@ -168,10 +168,11 @@ class ChatSession:
 
         learned = self._extract_learning(message)
         if learned:
-            raw = (
-                f"I learned that {learned['subject']} {learned['relation']} "
-                f"{learned['value']}. I will remember it."
-            )
+            if len(learned) == 1:
+                fact = learned[0]
+                raw = f"I learned that {fact['subject']} {fact['relation']} {fact['value']}. I will remember it."
+            else:
+                raw = f"I understand. You are teaching me {len(learned)} things, and I will remember them."
         else:
             raw = self._answer_from_learning(message)
             if raw is None:
