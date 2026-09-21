@@ -126,7 +126,7 @@ class ChatSession:
             if match:
                 if forced_subject:
                     subject = forced_subject
-                elif pattern.startswith(r"^(?:what|who)\\s+is\\s+(?:my|your|the)"):
+                elif pattern.startswith(r"^(?:what|who)\s+is\s+(?:my|your|the)"):
                     query_match = re.match(
                         r"^(?:what|who)\s+is\s+(my|your|the)\s+(.+?)['’]s\s+name$",
                         message.strip(),
