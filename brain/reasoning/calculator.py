@@ -122,7 +122,6 @@ class Calculator:
         """Recognize common natural-language arithmetic requests."""
         text = message.strip().lower().rstrip("?.!")
         patterns = [
-            (r"^(?:what is|calculate|compute)\s+(.+)$", lambda a: a),
             (r"^(?:add|sum)\s+(.+?)\s+and\s+(.+)$", lambda a, b: f"{a}+{b}"),
             (r"^(.+?)\s+plus\s+(.+)$", lambda a, b: f"{a}+{b}"),
             (r"^(.+?)\s+minus\s+(.+)$", lambda a, b: f"{a}-{b}"),
@@ -131,6 +130,7 @@ class Calculator:
             (r"^(.+?)\s+divided\s+by\s+(.+)$", lambda a, b: f"{a}/{b}"),
             (r"^divide\s+(.+?)\s+by\s+(.+)$", lambda a, b: f"{a}/{b}"),
             (r"^subtract\s+(.+?)\s+from\s+(.+)$", lambda a, b: f"{b}-{a}"),
+            (r"^(?:what is|calculate|compute)\s+(.+)$", lambda a: a),
         ]
 
         for pattern, builder in patterns:
