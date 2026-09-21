@@ -1,41 +1,74 @@
-# JAI Version: 0.0.1
-"""Training loop for JAI's first artificial neuron."""
+# JAI Version: 0.0.3
+"""Backpropagation trainer for JAI's first neural network."""
 
-from brain.neuron import Neuron
-from training.loss import mean_squared_error
+from brain.activations import sigmoid
+from brain.network import NeuralNetwork
 
 
-def train_neuron(
-    neuron: Neuron,
-    samples: list[tuple[float, float]],
-    learning_rate: float = 0.5,
-    epochs: int = 1000,
-) -> list[float]:
-    """Train a sigmoid neuron and return the loss after every epoch.
+def train_network(network: NeuralNetwork, samples: list[tuple[list[float], list[float]]], learning_rate: float = 1.0, epochs: int = 1000) -> list[float]:
+    """Train a one-hidden-layer network using backpropagation."""
+    if not samples:
+        raise ValueError("Training samples cannot be empty.")
+    if epochs < 1 or learning_rate <= 0:
+        raise ValueError("epochs and learning_rate must be positive.")
 
-    The neuron learns a binary classification boundary from (x, target) pairs.
-    """
     history: list[float] = []
 
     for _ in range(epochs):
         total_loss = 0.0
-        weight_gradient = 0.0
-        bias_gradient = 0.0
+        hwg = [[0.0] * network.input_size for _ in range(network.hidden_size)]
+        hbg = [0.0] * network.hidden_size
+        owg = [[0.0] * network.hidden_size for _ in range(network.output_size)]
+        obg = [0.0] * network.output_size
 
-        for x, target in samples:
-            z = neuron.linear_output(x)
-            prediction = neuron.forward(x)
-            error = prediction - target
-            total_loss += mean_squared_error(prediction, target)
+        for inputs, targets in samples:
+            if len(inputs) != network.input_size or len(targets) != network.output_size:
+                raise ValueError("Sample dimensions do not match the network.")
 
-            # d(sigmoid(z))/dz = prediction * (1 - prediction)
-            dz = 2.0 * error * prediction * (1.0 - prediction)
-            weight_gradient += dz * x
-            bias_gradient += dz
+            hidden = []
+            for weights, bias in zip(network.hidden_weights, network.hidden_biases):
+                hidden.append(sigmoid(sum(w * x for w, x in zip(weights, inputs)) + bias))
+
+            outputs = []
+            for weights, bias in zip(network.output_weights, network.output_biases):
+                outputs.append(sigmoid(sum(w * h for w, h in zip(weights, hidden)) + bias))
+
+            total_loss += sum((p - t) ** 2 for p, t in zip(outputs, targets)) / network.output_size
+
+            od = [
+                2.0 * (p - t) * p * (1.0 - p)
+                for p, t in zip(outputs, targets)
+            ]
+
+            for oi, delta in enumerate(od):
+                for hi, h in enumerate(hidden):
+                    owg[oi][hi] += delta * h
+                obg[oi] += delta
+
+            hd = []
+            for hi, h in enumerate(hidden):
+                downstream = sum(
+                    od[oi] * network.output_weights[oi][hi]
+                    for oi in range(network.output_size)
+                )
+                hd.append(downstream * h * (1.0 - h))
+
+            for hi, delta in enumerate(hd):
+                for ii, x in enumerate(inputs):
+                    hwg[hi][ii] += delta * x
+                hbg[hi] += delta
 
         count = len(samples)
-        neuron.weight -= learning_rate * weight_gradient / count
-        neuron.bias -= learning_rate * bias_gradient / count
+        for hi in range(network.hidden_size):
+            for ii in range(network.input_size):
+                network.hidden_weights[hi][ii] -= learning_rate * hwg[hi][ii] / count
+            network.hidden_biases[hi] -= learning_rate * hbg[hi] / count
+
+        for oi in range(network.output_size):
+            for hi in range(network.hidden_size):
+                network.output_weights[oi][hi] -= learning_rate * owg[oi][hi] / count
+            network.output_biases[oi] -= learning_rate * obg[oi] / count
+
         history.append(total_loss / count)
 
     return history
