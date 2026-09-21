@@ -4,11 +4,11 @@
 
 ## Current Version
 
-**JAI 0.6.0 — Interactive Chat**
+**JAI 0.7.0 — Persistent Memory**
 
-JAI can now train its own tiny decoder Transformer from a built-in dialogue dataset and use the learned parameters in an interactive terminal chat.
+JAI now has a permanent external memory system. Every chat encounter can be recorded as an original raw memory and organized into a category for later recall.
 
-This is a small educational language model, **not an LLM**. It has no pretrained weights and no external machine-learning libraries.
+This is still a small educational language model, **not an LLM**. It has no pretrained weights and no external machine-learning libraries.
 
 ## What JAI Has Built
 
@@ -80,14 +80,111 @@ This is a small educational language model, **not an LLM**. It has no pretrained
 - Automatic first-run training
 - Saved model and vocabulary
 - Interactive terminal conversation
-- Basic conversation history
 - User/JAI prompt formatting
+
+### 0.7.0 — Persistent Memory
+- Permanent `memory/` root
+- Raw encounter archive
+- Organized memory categories
+- Persistent memory index
+- Keyword-based memory recall
+- Recall statistics
+- Conversation memory saved automatically
+- Recalled memories supplied back to the chat session
+- Original encounters are retained rather than overwritten
+
+## Memory Architecture
+
+JAI's memory is intentionally separate from its neural model.
+
+```
+memory/
+├── raw/
+│   └── YYYY/MM/
+│       └── encounter.json
+├── organized/
+│   ├── conversations/
+│   ├── knowledge/
+│   ├── people/
+│   ├── concepts/
+│   ├── experiences/
+│   ├── tasks/
+│   ├── skills/
+│   ├── procedures/
+│   ├── errors/
+│   └── relationships/
+└── index.json
+```
+
+The design separates **what JAI encountered** from **how JAI organized it**.
+
+For example:
+
+```
+Encounter
+   ↓
+Raw permanent record
+   ↓
+Category + keywords + metadata
+   ↓
+Persistent organized memory
+   ↓
+Future recall
+   ↓
+Context supplied to JAI
+```
+
+This is the foundation for future learning from experience.
+
+## Long-Term Goal
+
+The long-term goal is not merely to make JAI save conversations.
+
+JAI should eventually be able to:
+
+```
+ENCOUNTER
+    ↓
+UNDERSTAND
+    ↓
+REMEMBER
+    ↓
+RECALL
+    ↓
+REASON
+    ↓
+ACT
+    ↓
+EVALUATE RESULT
+    ↓
+LEARN FROM RESULT
+    └──────────────→ MEMORY
+```
+
+That requires additional systems for semantic understanding, relationships between memories, task planning, learned procedures, action execution, and experience evaluation. Version 0.7.0 establishes the persistent-memory foundation for those systems; it does not claim that JAI already performs those capabilities perfectly.
 
 ## How JAI Works
 
-Text -> Tokenizer -> Token IDs -> Embeddings -> Causal Attention -> Feed-Forward Network -> Next-token probabilities -> Loss -> Backpropagation -> Updated parameters -> Generation -> Chat response
+Text -> Tokenizer -> Token IDs -> Embeddings -> Causal Attention -> Feed-Forward Network -> Next-token probabilities -> Generation -> Chat
 
-The important part is that the chat responses come from the Transformer parameters that JAI trained from examples. There is no pretrained language model behind it.
+The memory layer now surrounds the conversation:
+
+```
+User message
+    ↓
+Memory recall
+    ↓
+Chat context
+    ↓
+JAI response
+    ↓
+Permanent memory
+```
+
+The neural model and the memory system have different jobs:
+- **Transformer:** learns language patterns and generates responses.
+- **Memory:** stores encounters and organized information outside the model.
+- **Future reasoning system:** will learn to connect memories and use them to perform tasks.
 
 ## Running JAI
 
@@ -99,12 +196,23 @@ Requires Python 3.10+.
 The first chat run trains a small model and creates:
 - `jai_chat_model.json`
 - `jai_chat_vocab.json`
+- `memory/`
 
-Later runs reuse those files.
+Later runs reuse the model, vocabulary, and persistent memory.
 
 ## Current Limitations
 
-JAI is deliberately tiny. The chat model has a small vocabulary, a small dataset, one Transformer block, and a short context window. It can demonstrate learned conversational patterns, but it will not have the broad knowledge or fluency of a modern large language model.
+JAI's memory system is a foundation, not yet human-like understanding.
+
+Currently:
+- Memory organization uses transparent rule-based categorization.
+- Recall uses keyword matching.
+- The Transformer has a small vocabulary and dataset.
+- The neural model does not automatically rewrite its weights from every memory.
+- JAI does not yet autonomously plan and execute arbitrary tasks.
+- A stored memory is not automatically guaranteed to be true.
+
+These limitations are intentional. We are building the components ourselves so we can later replace simple mechanisms with more capable learned systems.
 
 ## Roadmap
 
@@ -119,11 +227,12 @@ JAI is deliberately tiny. The chat model has a small vocabulary, a small dataset
 | 0.4.0 | Decoder-style Transformer forward pass |
 | 0.4.1 | Transformer backpropagation + generation |
 | 0.5.0 / 0.5.1 | Checkpoints + generation |
-| **0.6.0** | **Interactive chat** |
-| 0.7.0 | Conversation memory |
-| 0.8.0 | Larger training corpus |
-| 0.9.0 | Better tokenizer and training pipeline |
+| 0.6.0 | Interactive chat |
+| **0.7.0** | **Persistent memory** |
+| 0.8.0 | Semantic understanding + larger corpus |
+| 0.9.0 | Better tokenizer, retrieval, and training pipeline |
 | 1.0.0 | Local JAI system |
+| 1.x | Task planning, skills, experience learning, and autonomous memory use |
 
 ## Principles
 
@@ -131,6 +240,8 @@ JAI is deliberately tiny. The chat model has a small vocabulary, a small dataset
 - Prefer understandable implementations over black boxes.
 - Avoid pretrained models during foundational stages.
 - Keep dependencies minimal.
+- Preserve original encounters.
+- Let JAI organize memory through explicit, inspectable systems.
 - Version every meaningful step.
 - Test what JAI learns.
 - Document how each part works.
