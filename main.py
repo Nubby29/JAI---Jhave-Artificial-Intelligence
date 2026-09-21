@@ -1,35 +1,39 @@
-# JAI Version: 0.3.0
-"""JAI — attention and Transformer foundations."""
+# JAI Version: 0.4.0
+"""JAI — the first complete decoder-style Transformer foundation."""
 
-from brain.transformer import TransformerBlock
+from brain.transformer import TransformerLanguageModel
 from tokenizer.tokenizer import Tokenizer
 
 
 def main() -> None:
-    texts = ["JAI learns from examples.", "JAI remembers important words."]
+    texts = [
+        "JAI learns from examples.",
+        "JAI learns from data.",
+        "JAI thinks about words.",
+        "JAI predicts the next token.",
+    ]
     tokenizer = Tokenizer()
     tokenizer.build_vocabulary(texts)
 
-    # One-hot-like vectors make the attention mechanism easy to inspect.
-    model_size = len(tokenizer.tokens)
-    token_ids = tokenizer.encode("JAI learns from examples.")
-    inputs = []
-    for token_id in token_ids:
-        vector = [0.0] * model_size
-        vector[token_id] = 1.0
-        inputs.append(vector)
+    model = TransformerLanguageModel(
+        len(tokenizer.tokens),
+        model_size=16,
+        context_size=8,
+        seed=7,
+    )
 
-    block = TransformerBlock(model_size)
-    _, weights = block.forward(inputs)
+    prompt = tokenizer.encode("JAI learns", add_bos=True)
+    probabilities, attention = model.forward(prompt)
 
-    print("JAI 0.3.0 — Attention / Transformer Foundations")
-    print(f"Vocabulary size: {model_size}")
-    print(f"Sequence length: {len(inputs)}")
-    print("Attention matrix:")
-    for row in weights:
-        print("  " + " ".join(f"{value:.3f}" for value in row))
-    print("\nEach row shows how much that token attends to every token.")
-    print("JAI now has the basic mechanism for context-dependent relationships.")
+    print("JAI 0.4.0 — First Decoder-Style Transformer")
+    print(f"Vocabulary size: {len(tokenizer.tokens)}")
+    print(f"Model size: {model.model_size}")
+    print(f"Context size: {model.context_size}")
+    print(f"Model parameters: {model.parameter_count()}")
+    print(f"Attention rows: {len(attention)}")
+    next_id = max(range(len(probabilities)), key=probabilities.__getitem__)
+    print(f"Prompt: {tokenizer.decode(prompt, skip_special=True)!r}")
+    print(f"Predicted next token: {tokenizer.id_to_token[next_id]!r}")
 
 
 if __name__ == "__main__":
