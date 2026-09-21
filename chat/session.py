@@ -1,4 +1,4 @@
-# JAI Version: 0.11.1
+# JAI Version: 0.12.0
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -84,14 +84,21 @@ class ChatSession:
                 (r"^(.+?)\s+equals\s+(.+?)\.?$", None, "equals"),
             ]
 
-            for pattern, fixed_subject, relation in patterns:
-                match = re.match(pattern, text, re.IGNORECASE)
-                if match:
-                    if fixed_subject:
-                        add(fixed_subject, relation, match.group(1))
-                    else:
-                        add(match.group(1), relation, match.group(2))
-                    break
+            # Explicit training may contain several simple facts separated by commas
+            # or by "and" (for example: "yes means agree, no means disagree").
+            chunks = [text]
+            if force and ("," in text or re.search(r"\band\b", text, re.IGNORECASE)):
+                chunks = [part.strip() for part in re.split(r",|\band\b", text, flags=re.IGNORECASE) if part.strip()]
+
+            for chunk in chunks:
+                for pattern, fixed_subject, relation in patterns:
+                    match = re.match(pattern, chunk, re.IGNORECASE)
+                    if match:
+                        if fixed_subject:
+                            add(fixed_subject, relation, match.group(1))
+                        else:
+                            add(match.group(1), relation, match.group(2))
+                        break
 
         equation_matches = re.findall(
             r"(?:(?:example|for\s+example)\s+)?([^=.!?]+?)\s*=\s*([0-9]+(?:\.[0-9]+)?)",
@@ -115,6 +122,20 @@ class ChatSession:
             return None
 
         normalized = self._normalize(message)
+        # Test a learned "subject is value" fact with a natural yes/no question.
+        yes_no = re.match(r"^(?:is|are)\s+(.+?)\s+(.+?)(?:\s+yes\s+or\s+no)?$", normalized)
+        if yes_no:
+            subject = yes_no.group(1).strip()
+            value = yes_no.group(2).strip()
+            value = re.sub(r"\s+yes\s+or\s+no$", "", value).strip()
+            facts = self.memory.learned_facts(subject)
+            for fact in facts:
+                meta = fact.get("metadata", {})
+                if meta.get("relation") == "is" and self._normalize(str(meta.get("value", ""))) == value:
+                    return "Yes."
+            if facts:
+                return "No."
+
         patterns = [
             (r"^(?:what(?:'s| is)|who\s+is)\s+my\s+name$", "my name"),
             (r"^(?:what(?:'s| is)|who\s+is)\s+your\s+name$", "JAI"),
