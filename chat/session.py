@@ -1,4 +1,4 @@
-# JAI Version: 0.11.0
+# JAI Version: 0.11.1
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -160,6 +160,9 @@ class ChatSession:
                         subject = f"{query_match.group(1).lower()} {query_match.group(2).strip()}"
                 else:
                     subject = match.group(1).strip()
+                    # Natural questions often include an article ("a dog", "an animal",
+                    # "the sky"), while learned facts are stored by their core subject.
+                    subject = re.sub(r"^(?:a|an|the)\\s+", "", subject, count=1, flags=re.IGNORECASE)
                 break
 
         if subject is None:
