@@ -1,0 +1,2 @@
+# JAI Version: 0.0.1
+# JAI 0.0.1 intentionally uses only the Python standard library.
