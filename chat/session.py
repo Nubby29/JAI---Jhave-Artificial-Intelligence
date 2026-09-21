@@ -1,4 +1,4 @@
-# JAI Version: 0.14.3
+# JAI Version: 0.14.4
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -181,52 +181,53 @@ class ChatSession:
         return None
 
     def _generate_programming_code(self, message):
-        """Generate a small code example by applying learned programming constructs."""
+        """Generate code by applying programming constructs JAI has actually learned."""
         if self.memory is None:
             return None
-        normalized = self._normalize(message)
 
-        # Apply the learned HTML <p> rule to requests such as:
-        # "create a sample html that shows hello world inside a <p>".
+        # Keep the original message because normalization removes HTML syntax such
+        # as <p>, which is meaningful to the programming-language learner.
+        original = message.strip()
         match = re.match(
-            r"^(?:create|make|write|generate)\s+(?:a\s+)?(?:sample|simple|basic)?\s*(html|xml)\s+(?:that\s+)?(?:shows?|displays?|contains?)\s+(.+?)\s+inside\s+(<![^>]+>|<[a-zA-Z][a-zA-Z0-9-]*>)$",
-            normalized,
+            r"^(?:create|make|write|generate)\\s+(?:a\\s+)?(?:sample|simple|basic)?\\s*(html|xml)\\s+(?:that\\s+)?(?:shows?|displays?|contains?)\\s+(.+?)\\s+inside\\s+(<![^>]+>|<[a-zA-Z][a-zA-Z0-9-]*>)\\s*[.!?]?$",
+            original,
             re.IGNORECASE,
         )
         if not match:
             return None
 
         language = match.group(1).lower()
-        content = match.group(2).strip()
+        content = match.group(2).strip().rstrip(" .!?")
         construct = match.group(3).lower()
-        if language != "html" or construct != "<p>":
+        if language != "html":
             return None
 
-        # Only generate a construct when JAI has actually learned that it is
-        # an HTML paragraph. This makes generation depend on learned knowledge.
+        # Check JAI's programming memory instead of hard-coding the meaning of
+        # <p>. The learner stores subjects as "html <p>".
         known = False
-        for fact in self.memory.programming_facts(language="html", limit=100):
+        for fact in self.memory.programming_facts(language=language, limit=100):
             meta = fact.get("metadata", {})
-            if (
-                str(meta.get("subject", "")).lower().endswith(" html <p>")
-                and meta.get("relation") == "defines"
-            ):
+            stored_subject = str(meta.get("subject", "")).strip().lower()
+            if stored_subject == f"{language} {construct}" and meta.get("relation") == "defines":
                 known = True
                 break
         if not known:
             return None
 
-        # Recover the original casing/content from the user's request rather
-        # than the normalized query whenever possible.
-        original = message.strip()
-        original_match = re.search(
-            r"(?:shows?|displays?|contains?)\\s+(.+?)\\s+inside\\s+<p>",
-            original,
-            re.IGNORECASE,
-        )
-        content = original_match.group(1).strip() if original_match else content
-        content = content.rstrip(" .!?\\t")
-        return "<!DOCTYPE html>\\n<html>\\n<head>\\n<title>Hello World</title>\\n</head>\\n<body>\\n<p>" + content + "</p>\\n</body>\\n</html>"
+        if construct == "<p>":
+            return (
+                "<!DOCTYPE html>\\n"
+                "<html>\\n"
+                "<head>\\n"
+                "<title>Hello World</title>\\n"
+                "</head>\\n"
+                "<body>\\n"
+                f"<p>{content}</p>\\n"
+                "</body>\\n"
+                "</html>"
+            )
+
+        return None
 
     def _answer_from_calculation(self, message):
         """Use JAI's reasoning layer to solve safe arithmetic requests."""
