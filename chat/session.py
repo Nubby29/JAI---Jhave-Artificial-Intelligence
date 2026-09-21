@@ -1,8 +1,9 @@
-# JAI Version: 0.13.0
+# JAI Version: 0.14.0
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
 from brain.reasoning.calculator import Calculator
+from brain.programming.learner import ProgrammingLearner
 from chat.corpus import DIALOGUES
 
 
@@ -119,6 +120,60 @@ class ChatSession:
             facts.append({"subject": "statement", "relation": "learned", "value": text})
 
         return facts or None
+
+    def _learn_programming(self, text, replace=False):
+        """Store structured programming-language knowledge learned from an explicit instruction."""
+        if self.memory is None:
+            return []
+        learned = []
+        for fact in ProgrammingLearner.extract(text):
+            self.memory.remember(
+                f"{fact['language']} {fact['subject']} {fact['relation']} {fact['value']}",
+                source="conversation",
+                metadata={
+                    "type": "programming_fact",
+                    "category": "knowledge",
+                    **fact,
+                },
+            )
+            learned.append(fact)
+        return learned
+
+    def _answer_from_programming(self, message):
+        """Retrieve programming concepts, language rules, and syntax examples."""
+        if self.memory is None:
+            return None
+        normalized = self._normalize(message)
+
+        # "What does <p> do?" / "What is <p>?"
+        tag_match = re.search(r"(?:what\s+does|what\s+is)\s+(<[a-zA-Z][a-zA-Z0-9-]*>)", message, re.IGNORECASE)
+        if tag_match:
+            tag = tag_match.group(1).lower()
+            for fact in self.memory.programming_facts(limit=100):
+                meta = fact.get("metadata", {})
+                if str(meta.get("subject", "")).lower().endswith(" " + tag):
+                    return f"{tag} {meta.get('relation', 'defines')} {meta.get('value', '')}."
+        # "What does HTML stand for?" and similar language-level questions.
+        match = re.match(r"^(?:what\s+does|what\s+is)\s+(.+?)\s+(?:stand\s+for|mean|used\s+for)$", normalized)
+        if match:
+            subject = match.group(1).strip()
+            for fact in self.memory.programming_facts(subject=subject, limit=20):
+                meta = fact.get("metadata", {})
+                relation = meta.get("relation")
+                if relation in {"stands_for", "means", "used_for"}:
+                    return f"{subject} {relation.replace('_', ' ')} {meta.get('value', '')}."
+        # "Show me HTML syntax/examples."
+        match = re.match(r"^(?:show|give|provide)\s+(?:me\s+)?(.+?)\s+(?:syntax|examples?)$", normalized)
+        if match:
+            language = match.group(1).strip()
+            examples = [
+                fact.get("metadata", {}).get("value", "")
+                for fact in self.memory.programming_facts(language=language, limit=20)
+                if fact.get("metadata", {}).get("kind") == "syntax"
+            ]
+            if examples:
+                return "Examples: " + ", ".join(examples[:5]) + "."
+        return None
 
     def _answer_from_calculation(self, message):
         """Use JAI's reasoning layer to solve safe arithmetic requests."""
@@ -326,9 +381,22 @@ class ChatSession:
             return f"Usage: --{mode} <information to {'learn' if mode == 'train' else 'correct'}>."
 
         facts = self._extract_learning(payload, force=True, replace=(mode == "fix"))
+        programming = self._learn_programming(payload, replace=(mode == "fix"))
+
+        # Avoid counting a programming record twice when the normal fact learner
+        # already extracted the exact same subject/relation/value.
+        seen = {
+            (item["subject"].strip().lower(), item["relation"].strip().lower(), item["value"].strip().lower())
+            for item in (facts or [])
+        }
+        programming_new = [
+            item for item in programming
+            if (item["subject"].strip().lower(), item["relation"].strip().lower(), item["value"].strip().lower()) not in seen
+        ]
+        total = len(facts or []) + len(programming_new)
         if mode == "fix":
-            return f"I corrected {len(facts or [])} learned item{'s' if len(facts or []) != 1 else ''}. I will use the updated information."
-        return f"I learned {len(facts or [])} item{'s' if len(facts or []) != 1 else ''} from this training instruction."
+            return f"I corrected {total} learned item{'s' if total != 1 else ''}. I will use the updated information."
+        return f"I learned {total} item{'s' if total != 1 else ''} from this training instruction."
 
     def reply(self, message):
         if not message.strip():
@@ -359,6 +427,8 @@ class ChatSession:
                 raw = f"I understand. You are teaching me {len(learned)} things, and I will remember them."
         else:
             raw = self._answer_from_learning(message)
+            if raw is None:
+                raw = self._answer_from_programming(message)
             if raw is None:
                 raw = self._answer_from_calculation(message)
             if raw is None:
