@@ -1,4 +1,4 @@
-# JAI Version: 0.10.0
+# JAI Version: 0.10.1
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -31,23 +31,26 @@ class ChatSession:
             return None
         text = message.strip()
         facts = []
+
         def add(subject, relation, value):
             subject = subject.strip(" .!?")
             value = value.strip(" .!?")
             if subject and value:
                 self.memory.learn_fact(subject, relation, value)
                 facts.append({"subject": subject, "relation": relation, "value": value})
+
         patterns = [
             (r"^(?:please\s+)?remember(?:\s+that)?\s+my\s+name\s+is\s+(.+?)\.?$", "my name", "name"),
             (r"^my\s+name\s+is\s+(.+?)\.?$", "my name", "name"),
             (r"^i\s+am\s+(.+?)\.?$", "user", "identity"),
-            (r"^(?:actually|no),?\s+(.+?)\s+is\s+(.+?)\.?$", null, "is"),
-            (r"^(?:please\s+)?remember(?:\s+that)?\s+(.+?)\s+means\s+(.+?)\.?$", null, "means"),
-            (r"^(.+?)\s+uses\s+(.+?)\.?$", null, "uses"),
-            (r"^(.+?)\s+is\s+used\s+for\s+(.+?)\.?$", null, "used_for"),
-            (r"^(.+?)\s+is\s+(.+?)\.?$", null, "is"),
-            (r"^(.+?)\s+equals\s+(.+?)\.?$", null, "equals"),
+            (r"^(?:actually|no),?\s+(.+?)\s+is\s+(.+?)\.?$", None, "is"),
+            (r"^(?:please\s+)?remember(?:\s+that)?\s+(.+?)\s+means\s+(.+?)\.?$", None, "means"),
+            (r"^(.+?)\s+uses\s+(.+?)\.?$", None, "uses"),
+            (r"^(.+?)\s+is\s+used\s+for\s+(.+?)\.?$", None, "used_for"),
+            (r"^(.+?)\s+is\s+(.+?)\.?$", None, "is"),
+            (r"^(.+?)\s+equals\s+(.+?)\.?$", None, "equals"),
         ]
+
         for pattern, fixed_subject, relation in patterns:
             match = re.match(pattern, text, re.IGNORECASE)
             if match:
@@ -56,12 +59,19 @@ class ChatSession:
                 else:
                     add(match.group(1), relation, match.group(2))
                 break
-        equation_matches = re.findall(r"(?:(?:example|for\s+example)\s+)?([^=.!?]+?)\s*=\s*([0-9]+(?:\.[0-9]+)?)", text, re.IGNORECASE)
+
+        equation_matches = re.findall(
+            r"(?:(?:example|for\s+example)\s+)?([^=.!?]+?)\s*=\s*([0-9]+(?:\.[0-9]+)?)",
+            text,
+            re.IGNORECASE,
+        )
         for left, right in equation_matches:
             left = left.strip(" .,:;")
             if re.fullmatch(r"[0-9+\-*/()\s]+", left):
                 add(left, "equals", right)
+
         return facts or None
+
     def _answer_from_learning(self, message):
         """Answer questions using facts explicitly learned through conversation."""
         if self.memory is None:
@@ -87,7 +97,6 @@ class ChatSession:
 
         facts = self.memory.learned_facts(subject)
         if not facts:
-            # Handle punctuation differences such as "2+2" vs "2 + 2".
             target = self._normalize(subject)
             for candidate in self.memory.search(subject, limit=20):
                 meta = candidate.get("metadata", {})
