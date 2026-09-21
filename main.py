@@ -1,30 +1,35 @@
-# JAI Version: 0.2.0
-"""JAI — the first tiny language model."""
+# JAI Version: 0.3.0
+"""JAI — attention and Transformer foundations."""
 
-from brain.language_model import LanguageModel
+from brain.transformer import TransformerBlock
 from tokenizer.tokenizer import Tokenizer
-from training.trainer import train_language_model
 
 
 def main() -> None:
-    texts = ["JAI learns.", "JAI learns.", "JAI learns.", "JAI thinks.", "JAI thinks."]
+    texts = ["JAI learns from examples.", "JAI remembers important words."]
     tokenizer = Tokenizer()
     tokenizer.build_vocabulary(texts)
-    sequences = [tokenizer.encode(text, add_bos=True, add_eos=True) for text in texts]
 
-    model = LanguageModel(len(tokenizer.tokens), embedding_size=12, context_size=3, seed=7)
-    history = train_language_model(model, sequences, learning_rate=0.25, epochs=300)
+    # One-hot-like vectors make the attention mechanism easy to inspect.
+    model_size = len(tokenizer.tokens)
+    token_ids = tokenizer.encode("JAI learns from examples.")
+    inputs = []
+    for token_id in token_ids:
+        vector = [0.0] * model_size
+        vector[token_id] = 1.0
+        inputs.append(vector)
 
-    print("JAI 0.2.0 — The First Tiny Language Model")
-    print(f"Vocabulary size: {len(tokenizer.tokens)}")
-    print(f"Model parameters: {model.parameter_count()}")
-    print(f"Initial loss: {history[0]:.6f}")
-    print(f"Final loss:   {history[-1]:.6f}")
+    block = TransformerBlock(model_size)
+    _, weights = block.forward(inputs)
 
-    prompt = tokenizer.encode("JAI", add_bos=True)
-    next_id = model.predict_next(prompt)
-    print("Prompt: JAI")
-    print(f"Predicted next token: {tokenizer.id_to_token[next_id]!r}")
+    print("JAI 0.3.0 — Attention / Transformer Foundations")
+    print(f"Vocabulary size: {model_size}")
+    print(f"Sequence length: {len(inputs)}")
+    print("Attention matrix:")
+    for row in weights:
+        print("  " + " ".join(f"{value:.3f}" for value in row))
+    print("\nEach row shows how much that token attends to every token.")
+    print("JAI now has the basic mechanism for context-dependent relationships.")
 
 
 if __name__ == "__main__":
