@@ -1,4 +1,4 @@
-# JAI Version: 0.14.5
+# JAI Version: 0.14.6
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -189,7 +189,7 @@ class ChatSession:
         # as <p>, which is meaningful to the programming-language learner.
         original = message.strip()
         match = re.match(
-            r"^(?:create|make|write|generate)\\s+(?:a\\s+)?(?:sample|simple|basic)?\\s*(html|xml)\\s+(?:that\\s+)?(?:shows?|displays?|contains?)\\s+(.+?)\\s+inside\\s+(<![^>]+>|<[a-zA-Z][a-zA-Z0-9-]*>)\\s*[.!?]?$",
+            r"^(?:create|make|write|generate)\s+(?:a\s+)?(?:sample|simple|basic)?\s*(html|xml)\s+(?:that\s+)?(?:shows?|displays?|contains?)\s+(.+?)\s+inside\s+(<![^>]+>|<[a-zA-Z][a-zA-Z0-9-]*>)\s*[.!?]?$",
             original,
             re.IGNORECASE,
         )
@@ -216,14 +216,14 @@ class ChatSession:
 
         if construct == "<p>":
             return (
-                "<!DOCTYPE html>\\n"
-                "<html>\\n"
-                "<head>\\n"
-                "<title>Hello World</title>\\n"
-                "</head>\\n"
-                "<body>\\n"
-                f"<p>{content}</p>\\n"
-                "</body>\\n"
+                "<!DOCTYPE html>\n"
+                "<html>\n"
+                "<head>\n"
+                "<title>Hello World</title>\n"
+                "</head>\n"
+                "<body>\n"
+                f"<p>{content}</p>\n"
+                "</body>\n"
                 "</html>"
             )
 
