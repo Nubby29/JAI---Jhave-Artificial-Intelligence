@@ -1,4 +1,4 @@
-# JAI Version: 0.13.0
+# JAI Version: 0.14.0
 """Tests for communication-based learning, yes/no questions, and learned-answer priority."""
 
 import tempfile
@@ -67,6 +67,29 @@ class ChatSessionLearningTests(unittest.TestCase):
             self.assertEqual(chat.reply("subtract 3 from 10"), "7.")
             self.assertEqual(chat.reply("multiply 4 by 5"), "20.")
             self.assertEqual(chat.reply("20 divided by 4"), "5.")
+
+    def test_programming_language_knowledge_and_syntax(self):
+        with tempfile.TemporaryDirectory() as directory:
+            memory = MemoryManager(Path(directory) / "memory")
+            chat = ChatSession(DummyModel(), DummyTokenizer(), memory=memory, bootstrap=True)
+
+            self.assertIn("1 item", chat.reply("--train HTML is the standard markup language for creating Web pages."))
+            self.assertEqual(
+                chat.reply("What is HTML?"),
+                "HTML is the standard markup language for creating Web pages.",
+            )
+
+            chat.reply("--train In HTML, the <p> element defines a paragraph.")
+            self.assertEqual(
+                chat.reply("What does <p> do?"),
+                "<p> defines a paragraph.",
+            )
+
+            chat.reply("--train In HTML, <h1> defines the main heading.")
+            self.assertIn(
+                "h1",
+                chat.reply("What does <h1> do?").lower(),
+            )
 
     def test_calculation_reasoning_respects_operator_precedence(self):
         with tempfile.TemporaryDirectory() as directory:
