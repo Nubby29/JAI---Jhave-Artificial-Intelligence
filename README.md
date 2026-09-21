@@ -4,11 +4,11 @@
 
 ## Current Version
 
-**JAI 0.4.0 — Decoder-Style Transformer**
+**JAI 0.4.1 — Trainable Transformer**
 
-JAI now has a from-scratch decoder-style Transformer forward pass with token embeddings, positional encoding, causal self-attention, residual connections, normalization, a feed-forward network, and next-token softmax output. The model is ready for the next training/backpropagation stage.
+JAI now trains its decoder-style Transformer end-to-end using analytical backpropagation implemented with Python's standard library.
 
-This is intentionally tiny and educational. It is **not an LLM** and does not use pretrained weights or external machine-learning libraries.
+This remains a tiny educational model. It is **not an LLM**, and it does not use pretrained weights or external machine-learning libraries.
 
 ## What JAI Has Built
 
@@ -64,17 +64,27 @@ This is intentionally tiny and educational. It is **not an LLM** and does not us
 - Layer normalization
 - ReLU feed-forward network
 - Next-token softmax output
-- Parameter counting
 
-## How JAI Learns Language
+### 0.4.1 — Transformer Backpropagation
+- Cross-entropy gradient
+- Output projection gradients
+- Feed-forward gradients
+- Layer-normalization gradients
+- Attention softmax gradients
+- Query/key/value gradients
+- Embedding gradients
+- End-to-end SGD
+- Token generation
 
-Text -> Tokenizer -> Token IDs -> Embeddings -> Attention -> Context-aware representations -> Next-token probabilities -> Loss -> Gradient descent
+## How JAI Learns
 
-At 0.4.0, the Transformer forward pass is complete enough to produce next-token probabilities. Its parameters are not yet trained end-to-end; backpropagation through the Transformer is the next engineering step.
+Text -> Tokenizer -> Token IDs -> Transformer -> Next-token probabilities -> Loss -> Backpropagation -> Gradient descent -> Updated parameters
+
+At 0.4.1, JAI can actually change its Transformer parameters from examples instead of only running a forward pass.
 
 ## Important Note
 
-JAI is still extremely small. The current model uses averaged embeddings rather than a Transformer, so it cannot yet understand long-range relationships, attention, or rich language. Those are later engineering steps.
+JAI is intentionally tiny. A model this small and trained on a tiny dataset will not produce general human-level language. The purpose is to understand and build the machinery ourselves.
 
 ## Roadmap
 
@@ -84,12 +94,15 @@ JAI is still extremely small. The current model uses averaged embeddings rather 
 | 0.0.2 | Multi-neuron network |
 | 0.0.3 | Backpropagation |
 | 0.1.0 | Tokenizer |
-| **0.2.0** | **Tiny language model** |
-| **0.3.0** | **Attention / Transformer foundations** |
-| **0.4.0** | **Decoder-style Transformer forward pass** |
-| 0.4.1 | Backpropagation through the Transformer |
-| 0.5 | External memory |
-| 1.0 | Local JAI system |
+| 0.2.0 | Tiny language model |
+| 0.3.0 | Attention / Transformer foundations |
+| 0.4.0 | Decoder-style Transformer forward pass |
+| **0.4.1** | **Transformer backpropagation + generation** |
+| 0.5.0 | Training data and checkpoint persistence |
+| 0.5.1 | Text generation improvements |
+| 0.6.0 | Interactive chat |
+| 0.7.0 | Conversation memory |
+| 1.0.0 | Local JAI system |
 
 ## Principles
 
