@@ -1,4 +1,4 @@
-# JAI Version: 0.12.0
+# JAI Version: 0.12.1
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -120,6 +120,22 @@ class ChatSession:
         """Answer questions using facts explicitly learned through conversation."""
         if self.memory is None:
             return None
+
+        # Equation queries must be inspected before normalization because the
+        # normalizer intentionally removes the "=" operator.
+        equation_query = re.match(r"^\\s*(.+?)\\s*=\\s*(?:\\?|)$", message.strip())
+        if equation_query:
+            subject = equation_query.group(1).strip()
+            facts = self.memory.learned_facts(subject)
+            if not facts:
+                compact = re.sub(r"\\s+", "", subject)
+                for candidate in self.memory.learned_facts(compact):
+                    facts = [candidate]
+                    break
+            if facts:
+                meta = facts[0].get("metadata", {})
+                if meta.get("relation") == "equals":
+                    return str(meta.get("value", "")) + "."
 
         normalized = self._normalize(message)
         # Test a learned "subject is value" fact with a natural yes/no question.
