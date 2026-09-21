@@ -1,4 +1,4 @@
-# JAI Version: 0.10.3
+# JAI Version: 0.10.4
 """Interactive chat with communication-based learning and persistent memory."""
 
 import re
@@ -57,10 +57,20 @@ class ChatSession:
                 self.memory.learn_fact(subject, relation, value)
                 facts.append({"subject": subject, "relation": relation, "value": value})
 
-        # Handle name statements specially so pronouns are given a stable meaning.
+        # Handle name statements specially so pronouns and relationships are given stable meanings.
         name_match = re.match(r"^(?:your|the)\s+name\s+is\s+(.+?)\.?$", text, re.IGNORECASE)
+        possessive_name_match = re.match(
+            r"^(my|your|the)\s+(.+?)['’]s\s+name\s+is\s+(.+?)\.?$",
+            text,
+            re.IGNORECASE,
+        )
         if name_match:
             add("JAI", "name", name_match.group(1))
+        elif possessive_name_match:
+            owner = possessive_name_match.group(1).lower()
+            thing = possessive_name_match.group(2).strip()
+            value = possessive_name_match.group(3)
+            add(f"{owner} {thing}", "name", value)
         else:
             patterns = [
                 (r"^(?:please\s+)?remember(?:\s+that)?\s+my\s+name\s+is\s+(.+?)\.?$", "my name", "name"),
@@ -102,6 +112,7 @@ class ChatSession:
 
         normalized = self._normalize(message)
         patterns = [
+            (r"^(?:what|who)\s+is\s+(?:my|your|the)\s+(.+?)['’]s\s+name$", None),
             (r"^(?:what|who)\s+is\s+(.+?)$", None),
             (r"^(?:what(?:'s| is)\s+my\s+name)$", "my name"),
             (r"^(?:what(?:'s| is)\s+your\s+name)$", "JAI"),
@@ -113,7 +124,20 @@ class ChatSession:
         for pattern, forced_subject in patterns:
             match = re.match(pattern, normalized)
             if match:
-                subject = forced_subject or match.group(1).strip()
+                if forced_subject:
+                    subject = forced_subject
+                elif pattern.startswith(r"^(?:what|who)\\s+is\\s+(?:my|your|the)"):
+                    query_match = re.match(
+                        r"^(?:what|who)\s+is\s+(my|your|the)\s+(.+?)['’]s\s+name$",
+                        message.strip(),
+                        re.IGNORECASE,
+                    )
+                    if query_match:
+                        subject = f"{query_match.group(1).lower()} {query_match.group(2).strip()}"
+                    else:
+                        subject = match.group(1).strip()
+                else:
+                    subject = match.group(1).strip()
                 break
 
         if subject is None:
@@ -151,8 +175,18 @@ class ChatSession:
         if relation == "identity":
             return f"You are {value}."
         if relation == "name":
-            if self._normalize(learned_subject) == "jai":
+            normalized_subject = self._normalize(learned_subject)
+            if normalized_subject == "jai":
                 return f"My name is {value}."
+            if normalized_subject.startswith("my "):
+                thing = learned_subject[3:].strip()
+                return f"Your {thing}'s name is {value}."
+            if normalized_subject.startswith("your "):
+                thing = learned_subject[5:].strip()
+                return f"Your {thing}'s name is {value}."
+            if normalized_subject.startswith("the "):
+                thing = learned_subject[4:].strip()
+                return f"The {thing}'s name is {value}."
             return f"Your name is {value}."
         return f"{learned_subject} is {value}."
 
