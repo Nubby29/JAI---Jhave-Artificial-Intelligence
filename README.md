@@ -10,7 +10,7 @@ JAI grows one layer at a time. The foundational implementations are intentionall
 
 ## Current Version
 
-**JAI 0.0.2 — The First Network**
+**JAI 0.0.3 — Learning Through Backpropagation**
 
 JAI now has a small feed-forward neural network:
 
@@ -20,7 +20,7 @@ JAI now has a small feed-forward neural network:
 
 The network contains **13 trainable parameters**: 6 hidden-layer weights, 3 hidden biases, 3 output weights, and 1 output bias.
 
-At this stage the network can perform a forward pass, but it is not yet being trained as a network. That is the next major learning step.
+JAI can now train the entire network with backpropagation. Errors are propagated from the output layer into the hidden layer, gradients are calculated for every weight and bias, and the parameters are updated after each epoch.
 
 ## What JAI Has Built
 
@@ -39,13 +39,20 @@ At this stage the network can perform a forward pass, but it is not yet being tr
 - Parameter counting
 - Network tests
 
+### 0.0.3 — Learning Through Backpropagation
+- Output-layer gradients
+- Hidden-layer gradients
+- Weight and bias updates
+- Epoch loss tracking
+- Training tests
+
 ## Roadmap
 
 | Version | Goal |
 |---|---|
 | 0.0.1 | Artificial neuron |
 | **0.0.2** | **Multi-neuron network** |
-| 0.0.3 | Train the network with backpropagation |
+| **0.0.3** | **Train the network with backpropagation** |
 | 0.1 | Tokenizer |
 | 0.2 | Language model |
 | 0.5 | External memory |
