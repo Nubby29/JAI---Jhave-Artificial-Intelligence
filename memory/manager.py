@@ -77,10 +77,10 @@ class MemoryManager:
         if not target: return facts
         for category in self.CATEGORIES:
             for path in (self.organized_root/category).rglob("*.json"):
-            try: record=json.loads(path.read_text(encoding="utf-8"))
-            except (OSError,json.JSONDecodeError): continue
-            meta=record.get("metadata",{})
-            if meta.get("type")=="learned_fact" and str(meta.get("subject","")).strip().lower()==target: facts.append(record)
+                try: record=json.loads(path.read_text(encoding="utf-8"))
+                except (OSError,json.JSONDecodeError): continue
+                meta=record.get("metadata",{})
+                if meta.get("type")=="learned_fact" and str(meta.get("subject","")).strip().lower()==target: facts.append(record)
         return sorted(facts,key=lambda x:x.get("created_at",""),reverse=True)
 
     def search(self,query,limit=10):
