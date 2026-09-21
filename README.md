@@ -4,7 +4,7 @@
 
 ## Current Version
 
-**JAI 0.4.1 — Trainable Transformer**
+**JAI 0.5.1 — Trainable Transformer + Checkpoints + Generation**
 
 JAI now trains its decoder-style Transformer end-to-end using analytical backpropagation implemented with Python's standard library.
 
@@ -76,6 +76,12 @@ This remains a tiny educational model. It is **not an LLM**, and it does not use
 - End-to-end SGD
 - Token generation
 
+### 0.5.0 / 0.5.1 — Persistence and Generation
+- JSON model checkpoints
+- Model loading
+- Temperature-based sampling
+- Configurable generation length
+
 ## How JAI Learns
 
 Text -> Tokenizer -> Token IDs -> Transformer -> Next-token probabilities -> Loss -> Backpropagation -> Gradient descent -> Updated parameters
@@ -97,7 +103,8 @@ JAI is intentionally tiny. A model this small and trained on a tiny dataset will
 | 0.2.0 | Tiny language model |
 | 0.3.0 | Attention / Transformer foundations |
 | 0.4.0 | Decoder-style Transformer forward pass |
-| **0.4.1** | **Transformer backpropagation + generation** |
+| 0.4.1 | Transformer backpropagation + generation |
+| **0.5.0 / 0.5.1** | **Checkpoints + improved generation** |
 | 0.5.0 | Training data and checkpoint persistence |
 | 0.5.1 | Text generation improvements |
 | 0.6.0 | Interactive chat |
